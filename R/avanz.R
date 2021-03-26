@@ -36,18 +36,35 @@ avanz <-
                 },
 
                 ## crea il file di avanzamento vuoto ad inizio progetto
-                setup = function(trn_filenames){
-                    trn_start <- digits_to_time(
-                        gsub(extract_ptrn, '\\1', trn_filenames))
+                ## e i nomi file revisione
+                setup = function(trn_filenames, trn_to_rev_ratio){
+                    trn_filenames <- sort(trn_filenames)
+                    start_digit <- gsub(".+([[:digit:]]{6}).+", '\\1', trn_filenames)
+                    trn_start <- digits_to_time(start_digit)
+                    ## determinazione nome file di revisione in base al trn_to_rev
+                    trn_fn_to_rev_fn <- function(std, ratio){
+                        n_revs <- floor(length(std) / ratio) + 1
+                        groups <- gl(n = n_revs, k = ratio)[seq_along(std)]
+                        splitted <- split(std, groups)
+                        first <- lapply(splitted, function(x) x[1])
+                        last  <- lapply(splitted, function(x) x[length(x)])
+                        len   <- unlist(lapply(splitted, length))
+                        rev_filenames <- unlist(Map(paste0, "revs_", first, "_", last, ".srt"))
+                        rep(rev_filenames, times = len)
+                    }
+                    rev2_filenames <- trn_fn_to_rev_fn(start_digit, trn_to_rev_ratio)
+                    ## creazione dell'avanzamento vuoto
                     avanz <- data.frame(trn_filename    = trn_filenames,
                                         trn_start       = trn_start,
                                         trn_assignee    = "",
                                         trn_assigned    = FALSE,
                                         trn_completed   = FALSE,
+                                        ## 
                                         rev1_assignee   = "",
                                         rev1_assigned   = FALSE,
                                         rev1_completed  = FALSE,
-                                        rev2_filename   = "",
+                                        ## 
+                                        rev2_filename   = rev2_filenames,
                                         rev2_assignee   = "",
                                         rev2_assigned   = FALSE,
                                         rev2_completed  = FALSE)
@@ -102,23 +119,43 @@ avanz <-
                     if (length(unfinished) > 0) unfinished else NULL
                 },
 
-                assign = function(old_f, assignee, new_f, role = c("translator", "revisor1", "revisor2")){
+                assign = function(old_f, assignee, new_f, role = c("translator", "revisor2")){
                     role <- match.arg(role)
                     tmp <- private$data
                     if (role == 'translator'){
                         tmp[tmp$trn_filename %in% old_f, 'trn_assignee'] <- assignee
                         tmp[tmp$trn_filename %in% old_f, 'trn_assigned'] <- TRUE
                         tmp[tmp$trn_filename %in% old_f, 'trn_filename'] <- new_f
-                    } else if (role == 'revisor1'){
-                        tmp[tmp$rev1_filename %in% old_f, 'rev1_assignee']<- assignee
-                        tmp[tmp$rev1_filename %in% old_f, 'rev1_assigned']<- TRUE
                     } else if (role == 'revisor2'){
                         tmp[tmp$rev2_filename %in% old_f, 'rev2_assignee']<- assignee
                         tmp[tmp$rev2_filename %in% old_f, 'rev2_assigned']<- TRUE
                         tmp[tmp$rev2_filename %in% old_f, 'rev2_filename']<- new_f
                     }
                     private$data <- tmp
+                },
+
+                mark_as_started = function(f, assignee, role = c("revisor1")){
+                    role <- match.arg(role)
+                    tmp <- private$data
+                    if  (role == 'revisor1'){
+                        tmp[tmp$trn_filename %in% f, 'rev1_assignee']<- assignee
+                        tmp[tmp$trn_filename %in% f, 'rev1_assigned']<- TRUE
+                    } 
+                    private$data <- tmp
+                },
+                
+                mark_as_completed = function(file, phase = c('trn', 'rev1', 'rev2')){
+                    phase <- match.arg(phase)
+                    tmp <- private$data
+                    completed_var <- sprintf("%s_completed", phase)
+                    filename_var <- switch(ftype,
+                                           trn = "trn_filename",
+                                           rev1 = "trn_filename",
+                                           rev2 = "rev2_filename")
+                    tmp[tmp[, filename_var] %in% file, completed_var] <- TRUE
+                    private$data <- tmp
                 }
+                
             ),
             private = list(
                 file = NULL,

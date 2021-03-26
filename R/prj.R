@@ -15,7 +15,7 @@ initialize <- function(id, yt_id){
 }
 
 ## funzione della main class
-setup <- function(chunks_len_mins){
+setup <- function(chunks_len_mins, trn_to_rev_ratio){
     ## import and split source
     private$source_srt <- srt$new(id = 'source',
                                   f = private$source_srt_f)
@@ -24,7 +24,7 @@ setup <- function(chunks_len_mins){
                                        output_dir = private$prj_dir)
     fnames <- unlist(lapply(chunks, function(c) c$fn))
     ## setup monitoring
-    private$avanz$setup(trn_filenames = fnames)
+    private$avanz$setup(trn_filenames = fnames, trn_to_rev_ratio = trn_to_rev_ratio)
 }
 
 ## --------------
@@ -32,7 +32,7 @@ setup <- function(chunks_len_mins){
 ## --------------
 ## importa i login utente github da un file
 ## f è un path ad un file che include login di github
-users_from_file <- function(f){
+lines_from_file <- function(f){
     users <- if (file.exists(f)) readLines(args$sandbox_file) else NULL
     users %without% ''
 }
@@ -69,8 +69,8 @@ check_allowed_users <- function(users, role = c('translator', 'revisor1', 'revis
 
 ## funzione della main class
 create_sandbox <- function(sandbox_f, rev1_sandbox_f){
-    sandbox_users      <- users_from_file(sandbox_f)
-    rev1_sandbox_users <- users_from_file(rev1_sandbox_f)
+    sandbox_users      <- lines_from_file(sandbox_f)
+    rev1_sandbox_users <- lines_from_file(rev1_sandbox_f)
     ## sandbox di translators
     if (length(sandbox_users) > 0L) {
         ## notify: header
@@ -162,8 +162,8 @@ assign <- function(translate_f, revise2_f)
     ## update aggiornamento: salva su disco
     on.exit(private$avanz$to_disk())
 
-    translate_users <- users_from_file(translate_f)
-    revise2_users   <- users_from_file(revise2_f)
+    translate_users <- lines_from_file(translate_f)
+    revise2_users   <- lines_from_file(revise2_f)
 
     ## -----
     ## Utils
@@ -244,6 +244,49 @@ assign <- function(translate_f, revise2_f)
 }
 
 
+## -------------------------------------------------------
+
+get_rev1_user <- function(f) {
+    title <- sprintf('Who assigned %s', f)
+    users <- private$users$revisors1()
+    id <- utils::menu(title = title,
+                      choices = users,
+                      graphics = TRUE)
+    users[id]
+}
+
+mark_progresses <- function(trn_completed_f  = NULL,
+                            rev1_started_f   = NULL,
+                            rev1_completed_f = NULL,
+                            rev2_completed_f = NULL)
+{
+    ## update aggiornamento: salva su disco
+    on.exit(private$avanz$to_disk())
+
+    ## rev1 iniziate
+    started_rev1 <- lines_from_file(rev1_started_f)
+    rev1_assignee <- unlist(lapply(started_rev1, get_rev1_user))
+    Map(private$avanz$mark_as_started,
+        as.list(started_rev1),
+        as.list(rev1_assignee),
+        as.list('revisor1'))
+    
+    ## trn, rev1 e rev2 completate
+    compl_trn  <- lines_from_file(trn_completed_f)
+    compl_rev1 <- lines_from_file(rev1_completed_f)
+    compl_rev2 <- lines_from_file(rev2_completed_f)
+    Map(private$avanz$mark_as_completed,
+        as.list(compl_trn), as.list('trn'))
+    Map(private$avanz$mark_as_completed,
+        as.list(compl_rev1), as.list('rev1'))
+    Map(private$avanz$mark_as_completed,
+        as.list(compl_rev2), as.list('rev2'))
+    
+    ## controlla se ci sono file revisione da creare
+    
+}
+
+
 ## ----------------------------------------------------------------
 ## Main class
 ## ----------------------------------------------------------------
@@ -258,7 +301,8 @@ prj <- R6::R6Class(classname = "prj",
                        ## utenti
                        users = NULL,
                        create_sandbox = create_sandbox,
-                       assign = assign
+                       assign = assign,
+                       mark_progresses = mark_progresses
                    ),
                    private = list(
                        id = NULL,
@@ -273,3 +317,121 @@ prj <- R6::R6Class(classname = "prj",
                        source_srt_f = NULL,
                        source_srt   = NULL
                    ))
+
+
+
+
+
+
+## ## --------------------------------------
+## ## In seguito a comunicazioni sulla chat
+## ## --------------------------------------
+
+
+## trn_to_rev_ratio <- as.integer(args$trn_to_rev_ratio)
+
+
+## ## -----
+## ## utils
+## ## -----
+## ## funzione che lista i revisori
+## list_revisors <- function(){
+##     db <- read.csv("data/users.csv")
+##     revisors <- db[db[,"revisor"], "gh_user"]
+##     cat("\n\n CC revisors: ", sprintf("@%s", revisors), "\n\n")
+## }
+
+
+## ascii_header('mark as completed')
+
+## ## --------------------------------------------------
+## ## check se ci sono gruppi di translate per revisione
+## ## --------------------------------------------------
+
+## ascii_header('Ready for revision check: file da assegnare')
+
+## if (interactive()){
+##     ## testing stuff
+##     setwd("~/av_it_subs")
+##     prj <- 'hnva2'
+##     prj_dir <- "subs/hnva2"
+##     trn_to_rev_ratio <- 6
+## }
+
+## trn   <- c(list.files(path = prj_dir, pattern = 'subs_.*.srt',
+##                       full.names = TRUE), 'asd')
+## compl_trn <- list.files(path = prj_dir, pattern = 'subs_.*_c.srt',
+##                         full.names = TRUE)
+## completed <- trn %in% compl_trn
+## trns <- data.frame(trn, completed, stringsAsFactors = FALSE)
+## trns$group <- gl(n = ceiling(nrow(trns) / trn_to_rev_ratio),
+##                  k = trn_to_rev_ratio)[seq_len(nrow(trns))]
+## trn_spl <- split(trns, f = trns$group)
+
+## revs_maker <- function(g){# g è il df di file del chunkettone da revisione
+##     ## tutti i file del gruppo sono completi
+##     if (all(g$completed)) {
+##         digits <- sort(gsub("^subs_([[:digit:]]{6}).+", "\\1", basename(g$trn)))
+##         first <- digits[1]
+##         last  <- digits[length(digits)]
+##         outfile <- sprintf("%s/revs_%s_%s.srt", prj_dir, first, last)
+##         already_created <- file.exists(outfile)
+##         already_assigned <- length(list.files(
+##             path = prj_dir,
+##             pattern = sprintf('^revs_%s_%s_.+\\.srt', first, last)
+##         )) > 0L
+##         create_it <- ! (already_created || already_assigned)
+##         if (create_it) {
+##             cmd <- sprintf("cat %s", paste(g$trn, collapse = ' '))
+##             input <- pipe(cmd)
+##             on.exit(close(input))
+##             ## file per check con subs editor: parsa proprio l'srt e pulisci
+##             polished_srts <- read_srt(f = input)
+##             write_srt(polished_srts, f = outfile)
+##         }
+##     }
+## }
+
+## tmp <- unlist(lapply(trn_spl, revs_maker))
+
+## todo_rev <- list.files(path = prj_dir,
+##                        pattern = '^revs_[[:digit:]]{6}_[[:digit:]]{6}\\.srt',
+##                        full.names = TRUE)
+
+## raw_path <- "https://raw.githubusercontent.com/lbraglia/av_it_subs/main"
+## rev_url <- sprintf("%s/%s", raw_path, todo_rev)
+
+## cat("\n\n", rev_url, "\n\n", sep = '\n')
+
+## list_revisors()
+
+
+## ## ------------------------------------------------------------
+## ## check se tutte le revisioni sono complete e creazione finale
+## ## ------------------------------------------------------------
+
+## final_checker <- function(r){# r is a path to a revision file
+##     ## check if all completed
+##     all_completed <- all(grepl(pattern = '_c\\.srt$', x = r))
+##     if (all_completed){
+##         outfile <- sprintf("%s/%s_final.srt", prj_dir, prj)
+##         already_created <- file.exists(outfile)
+##         if (!already_created) {
+##             ascii_header('Tutte le revisioni sono complete')
+##             ascii_header('creare il file finale con make final-srt')
+##         }
+##     }
+## }
+
+## avail_revs <- list.files(path = prj_dir,
+##                          pattern = '^revs_[[:digit:]]{6}_[[:digit:]]{6}',
+##                          full.names = TRUE)
+## final_maker(avail_revs)
+
+
+
+
+
+
+
+    
