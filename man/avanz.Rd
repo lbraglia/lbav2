@@ -14,6 +14,11 @@ classe che rappresenta uno stato avanzamento
 \item \href{#method-new}{\code{avanz$new()}}
 \item \href{#method-from_disk}{\code{avanz$from_disk()}}
 \item \href{#method-to_disk}{\code{avanz$to_disk()}}
+\item \href{#method-setup}{\code{avanz$setup()}}
+\item \href{#method-assignable_files}{\code{avanz$assignable_files()}}
+\item \href{#method-list_assignee}{\code{avanz$list_assignee()}}
+\item \href{#method-unfinished_homeworks}{\code{avanz$unfinished_homeworks()}}
+\item \href{#method-assign}{\code{avanz$assign()}}
 \item \href{#method-clone}{\code{avanz$clone()}}
 }
 }
@@ -40,7 +45,57 @@ classe che rappresenta uno stato avanzamento
 \if{latex}{\out{\hypertarget{method-to_disk}{}}}
 \subsection{Method \code{to_disk()}}{
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{avanz$to_disk()}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{avanz$to_disk(newdata = NULL)}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-setup"></a>}}
+\if{latex}{\out{\hypertarget{method-setup}{}}}
+\subsection{Method \code{setup()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{avanz$setup(trn_filenames)}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-assignable_files"></a>}}
+\if{latex}{\out{\hypertarget{method-assignable_files}{}}}
+\subsection{Method \code{assignable_files()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{avanz$assignable_files(role = c("translator", "revisor1", "revisor2"))}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-list_assignee"></a>}}
+\if{latex}{\out{\hypertarget{method-list_assignee}{}}}
+\subsection{Method \code{list_assignee()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{avanz$list_assignee()}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-unfinished_homeworks"></a>}}
+\if{latex}{\out{\hypertarget{method-unfinished_homeworks}{}}}
+\subsection{Method \code{unfinished_homeworks()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{avanz$unfinished_homeworks(u, role = c("translator", "revisor1", "revisor2"))}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-assign"></a>}}
+\if{latex}{\out{\hypertarget{method-assign}{}}}
+\subsection{Method \code{assign()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{avanz$assign(
+  old_f,
+  assignee,
+  new_f,
+  role = c("translator", "revisor1", "revisor2")
+)}\if{html}{\out{</div>}}
 }
 
 }

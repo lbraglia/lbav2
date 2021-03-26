@@ -13,6 +13,8 @@ classe che rappresenta un progetto
 \itemize{
 \item \href{#method-new}{\code{prj$new()}}
 \item \href{#method-setup}{\code{prj$setup()}}
+\item \href{#method-create_sandbox}{\code{prj$create_sandbox()}}
+\item \href{#method-assign}{\code{prj$assign()}}
 \item \href{#method-clone}{\code{prj$clone()}}
 }
 }
@@ -31,6 +33,24 @@ classe che rappresenta un progetto
 \subsection{Method \code{setup()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{prj$setup(chunks_len_mins)}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-create_sandbox"></a>}}
+\if{latex}{\out{\hypertarget{method-create_sandbox}{}}}
+\subsection{Method \code{create_sandbox()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{prj$create_sandbox(sandbox_f, rev1_sandbox_f)}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-assign"></a>}}
+\if{latex}{\out{\hypertarget{method-assign}{}}}
+\subsection{Method \code{assign()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{prj$assign(translate_f, revise2_f)}\if{html}{\out{</div>}}
 }
 
 }

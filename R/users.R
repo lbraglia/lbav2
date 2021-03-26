@@ -9,17 +9,24 @@ users <- R6::R6Class('users',
                              tmp <- private$data
                              tmp[tmp$translator, 'gh_user']
                          },
-                         revisors = function(){
+                         revisors1 = function(){
                              tmp <- private$data
-                             tmp[tmp$revisor, 'gh_user']
+                             tmp[tmp$revisor1, 'gh_user']
+                         },
+                         revisors2 = function(){
+                             tmp <- private$data
+                             tmp[tmp$revisor2, 'gh_user']
                          },
                          print = function(){
                              print(private$data)
                          },
-                         mention_revisors = function(){
-                             cat("\n\n",
-                                 sprintf("@%s", self$revisors()),
-                                 "\n", sep = ' ')
+                         mention = function(role = c('translator', 'revisor1', 'revisor2')){
+                             role <- match.arg(role)
+                             who <- switch(role,
+                                           'translator' = self$translators(),
+                                           'revisor1' = self$revisors1(),
+                                           'revisor2' = self$revisors2())
+                             cat("\n\n", sprintf("@%s", who), "\n", sep = ' ')
                          }
                      ),
                      private = list(

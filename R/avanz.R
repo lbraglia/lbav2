@@ -44,6 +44,7 @@ avanz <-
                                         trn_assignee    = "",
                                         trn_assigned    = FALSE,
                                         trn_completed   = FALSE,
+                                        rev1_assignee   = "",
                                         rev1_assigned   = FALSE,
                                         rev1_completed  = FALSE,
                                         rev2_filename   = "",
@@ -53,16 +54,18 @@ avanz <-
                     self$to_disk(newdata = avanz)
                 },
                 
-                ## ritorna i file di traduzione assegnabili
-                assignable_trn = function(){
-                    tmp <- private$data
-                    tmp[!tmp$trn_assigned, "trn_filename"]
-                },
-
-                ## ritorna i file di revisione assegnabili
-                assignable_rev2 = function(){
-                    tmp <- private$data
-                    tmp[!tmp$rev2_assigned, "rev2_filename"]
+                ## obtain assignable by role
+                assignable_files = function(role = c('translator', 'revisor1', 'revisor2')){
+                    role <- match.arg(role)
+                    tmp <- private$data                    
+                    if (role == 'translator') {
+                        tmp[!tmp$trn_assigned, "trn_filename"]
+                    } else if (role == 'revisor1') {
+                        row <- tmp$trn_completed & (!tmp$rev1_assigned)
+                        tmp[row, "trn_filename"]
+                    } else if (role == 'revisor2') {
+                        tmp[!tmp$rev2_assigned, "rev2_filename"]
+                    }
                 },
                 
                 ## lista i traduttori per un determinato progetto
@@ -76,25 +79,49 @@ avanz <-
                               collapse = ' '), sep = '\n')
                 },
 
-                ## assign a translate
-                assign_trn = function(old, new, assignee){
+                ## lista i file non finiti per un dato traduttore o revisore
+                unfinished_homeworks = function(u, role = c("translator", 'revisor1', 'revisor2')){
+                    role <- match.arg(role)
                     tmp <- private$data
-                    tmp[tmp$trn_filename %in% old, 'trn_assignee'] <- assignee
-                    tmp[tmp$trn_filename %in% old, 'trn_assigned'] <- TRUE
-                    tmp[tmp$trn_filename %in% old, 'trn_filename'] <- new
-                    private$data <- tmp
+                    if (role == 'translator'){
+                        row <- with(tmp, trn_assignee %in% u & 
+                                         trn_assigned == TRUE & 
+                                         trn_completed == FALSE)
+                        unfinished <- tmp[row, "trn_filename"]
+                    } else if (role == 'revisor1') {
+                        row <- with(tmp, rev1_assignee %in% u & 
+                                         rev1_assigned == TRUE & 
+                                         rev1_completed == FALSE)
+                        unfinished <- tmp[row, "rev1_filename"]
+                    } else if (role == 'revisor2') {
+                        row <- with(tmp, rev2_assignee %in% u & 
+                                         rev2_assigned == TRUE & 
+                                         rev2_completed == FALSE)
+                        unfinished <- tmp[row, "rev2_filename"]
+                    }
+                    if (length(unfinished) > 0) unfinished else NULL
                 },
 
-                ## assign a revision (phase 2)
-                assign_rev2 = function(old, new, assignee){
+                assign = function(old_f, assignee, new_f, role = c("translator", "revisor1", "revisor2")){
+                    role <- match.arg(role)
                     tmp <- private$data
-                    tmp[tmp$rev2_filename %in% old, 'rev2_assignee']<- assignee
-                    tmp[tmp$rev2_filename %in% old, 'rev2_assigned']<- TRUE
-                    tmp[tmp$rev2_filename %in% old, 'rev2_filename']<- new
+                    if (role == 'translator'){
+                        tmp[tmp$trn_filename %in% old_f, 'trn_assignee'] <- assignee
+                        tmp[tmp$trn_filename %in% old_f, 'trn_assigned'] <- TRUE
+                        tmp[tmp$trn_filename %in% old_f, 'trn_filename'] <- new_f
+                    } else if (role == 'revisor1'){
+                        tmp[tmp$rev1_filename %in% old_f, 'rev1_assignee']<- assignee
+                        tmp[tmp$rev1_filename %in% old_f, 'rev1_assigned']<- TRUE
+                    } else if (role == 'revisor2'){
+                        tmp[tmp$rev2_filename %in% old_f, 'rev2_assignee']<- assignee
+                        tmp[tmp$rev2_filename %in% old_f, 'rev2_assigned']<- TRUE
+                        tmp[tmp$rev2_filename %in% old_f, 'rev2_filename']<- new_f
+                    }
                     private$data <- tmp
                 }
             ),
             private = list(
                 file = NULL,
                 data = NULL
-            ))
+            )
+        )

@@ -1,20 +1,18 @@
+## ----------------------------------------------------------------------
+## Initialize the project in memory (every time) and setup (at beginning)
+## ----------------------------------------------------------------------
 initialize <- function(id, yt_id){
-    ## Inizializza l'oggetto
-    
     ## id
     private$id      <- id
     private$yt_id   <- yt_id
-
     ## utenti
     self$users <- users$new(users_f = users_file)
-
     ## directory e file del progetto
     private$prj_dir  <- sprintf('%s/%s', subs_dir, id)
     private$avanz_f  <- sprintf('%s/%s', private$prj_dir, 'zz_avanzamento.csv')
     private$avanz    <- avanz$new(private$avanz_f)
     private$source_srt_f <- sprintf('%s/%s.srt', source_dir, id)
 }
-
 
 ## funzione della main class
 setup <- function(chunks_len_mins){
@@ -32,7 +30,6 @@ setup <- function(chunks_len_mins){
 ## --------------
 ## Create sandbox
 ## --------------
-
 ## importa i login utente github da un file
 ## f è un path ad un file che include login di github
 users_from_file <- function(f){
@@ -41,9 +38,9 @@ users_from_file <- function(f){
 }
 
 ## genera il nome file (srt) di un sandbox in base a login e tipologia
-sandbox_file <- function(user, type = c("translator", "revisor1")){
-    type <- match.arg(type)
-    postfix <- switch(type, translator = "trn", revisor1 = "rev1")
+sandbox_file <- function(user, role = c("translator", "revisor1", 'revisor2')){
+    role <- match.arg(role)
+    postfix <- switch(role, translator = "trn", revisor1 = "rev1", revisor1 = "rev2")
     sprintf('%s_%s.srt', user, postfix)
 }
 
@@ -51,15 +48,11 @@ sandbox_file <- function(user, type = c("translator", "revisor1")){
 ## siano stati abilitati in data/users.csv (a seconda del permesso
 ## specificato) restituisce gli utenti abilitati, segnala se ve ne
 ## sono di non abilitati e interrompe se nessuno è abilitato
-check_allowed_users <- function(users, type = c('translator', 'revisor')){
-    ## obtain allowed users from data/users.csv
-    allowed_users <- get_users()
-    allowed_translators <- allowed_users$translators
-    allowed_revisors  <- allowed_users$revisors
-    ## what to be checked
-    type <- match.arg(type)
-    allowed <- if (type == 'translator') self$users$translators()
-               else self$users$revisors()
+check_allowed_users <- function(users, role = c('translator', 'revisor1', 'revisor2')){
+    role <- match.arg(role)
+    allowed <- if      (role == 'translator') self$users$translators()
+               else if (role == 'revisor1')   self$users$revisors1()
+               else if (role == 'revisor2')   self$users$revisors2()
     ## do the check
     not_allowed_users <- users[users %nin% allowed]
     allowed_users     <- users[users %in% allowed]
@@ -85,7 +78,7 @@ create_sandbox <- function(sandbox_f, rev1_sandbox_f){
         ## check permissions
         allowed_users <- check_allowed_users(sandbox_users, 'translator')
         ## files and dirs
-        files <- sandbox_file(allowed_users, type = "translator")
+        files <- sandbox_file(allowed_users, role = "translator")
         ## copia file
         tmp <- Map(file.copy,
                    from = list(sandbox_template_traduttori),
@@ -101,7 +94,7 @@ create_sandbox <- function(sandbox_f, rev1_sandbox_f){
         ## check permissions
         allowed_users <- check_allowed_users(rev1_sandbox_users, 'revisor')
         ## files and dirs
-        files <- sandbox_file(allowed_users, type = "revisor1")
+        files <- sandbox_file(allowed_users, role = "revisor1")
         ## copia file
         tmp <- Map(file.copy,
                    from = list(sandbox_template_revisori1),
@@ -116,20 +109,20 @@ create_sandbox <- function(sandbox_f, rev1_sandbox_f){
 ## Assign
 ## ----------------------------------------------------------------
 
-check_sandbox <- function(users, type = c('translator', 'revisor1')){
-    ## funzione che prende in input dei login github, una tipologia di
-    ## utente e verifica che l'utente abbia un sandbox per la
-    ## tipologia considerata
-    ## restituisce gli utenti che hanno una sandbox o si lamenta e
-    ## blocca similmente ad allowed users
+## funzione che prende in input dei login github, una tipologia di
+## utente e verifica che l'utente abbia un sandbox per la
+## tipologia considerata
+## restituisce gli utenti che hanno una sandbox o si lamenta e
+## blocca similmente ad allowed users
+check_sandbox <- function(users, role = c('translator', 'revisor1', 'revisor2')){
     
-    type <- match.arg(type)
+    role <- match.arg(role)
     users_sandbox <- sprintf('subs/sandbox/%s',
-                             sandbox_file(users, type  = type))
-                             
+                             sandbox_file(users, role = role))
     no_sandbox <- users[!file.exists(users_sandbox)]
     if (length(no_sandbox) > 0L){
-        msg <- c("Alcuni utenti non hanno ancora il file di sandbox file.\n ",
+        msg <- c("Alcuni utenti non hanno ancora il file di sandbox da",
+                 role, ".\n ",
                  "Sono: ", paste(no_sandbox, collapse = ', '))
         warning(msg)
     }
@@ -139,32 +132,25 @@ check_sandbox <- function(users, type = c('translator', 'revisor1')){
     users_with_sandbox
 }
     
-check_homework <- function(prj, users, type = c("translator", "revisor2")){
-    ## funzione che dato un progetto controlla che un utente di un tipo non
-    ## abbia task non finiti (prima di richiedere) nuove assegnazioni
-    ## da translator o revisor
+## funzione che dato un progetto controlla che gli utenti di un tipo non
+## abbia task non finiti (prima di richiedere) nuove assegnazioni
+## da translator o revisor
+check_homework <- function(users, role = c("translator", "revisor1", "revisor2")){
+    role <- match.arg(role)
+    homework_done <- function(u, role = role) {
+        ## controlla se un singolo utente ha fatto i compiti
+        file_non_finiti <-
+            private$avanz$unfinished_homeworks(user = user, role = role)
 
-    avanz <- leggi_avanzamento_TODOHERE
-
-    type <- match.arg(type)
-    ptrn <- switch(type,
-                   translator = "^subs_[[:digit:]]{6}_%s.srt$",
-                   revisor2 = "^revs_[[:digit:]]{6}_[[:digit:]]{6}_%s\\.srt$")
-    
-    ok_homework <- function(u, type  = type) {
-        ## controlla se un singolo utente ha compiti non finiti in
-        ## una determinata tipologia
-        non_finiti <- list.files(pattern = sprintf(ptrn, u), path = prj_dir)
-        if (length(non_finiti) > 0L) {
+        if (length(file_non_finiti) > 0L) {
             warning(u, ' has unfinished files: ',
-                    paste(non_finiti, collapse = ' '),
+                    paste(file_non_finiti, collapse = ' '),
                     '\n  Ignoring his/her request.')
         }
         all_complete <- length(non_finiti) == 0L
         all_complete
     }
-    
-    allowed_users <- Filter(f = ok_homework, users)
+    allowed_users <- Filter(f = homework_done, users)
     if (length(allowed_users) == 0L) stop("No allowed users for this request")
     allowed_users
 }
@@ -179,11 +165,83 @@ assign <- function(translate_f, revise2_f)
     translate_users <- users_from_file(translate_f)
     revise2_users   <- users_from_file(revise2_f)
 
-    ## translate
+    ## -----
+    ## Utils
+    ## -----
+    assign_worker <- function(old_f, assignee, new_f, from_path, to_path, role){
+        ## worker di assegnazione: modifica file su disco e aggiorna avanzamento
+        ## modifica il nome su disco
+        file.rename(from = from_path, to = to_path)
+        ## modifica stato avanzamento e salva su disco
+        private$avanz$assign(old_f = old_f, assignee = assignee, new_f = new_f, role = role)  
+    }
 
-    ## revise
+    excluded_users_message <- function(u)                
+        message('per alcuni utenti non vi sono file assegnabili ',
+                '(terminati, yee).', '\nSono: ',
+                paste(u, collapse = ', '), '\n')
+
+    try_assign <- function(users, role = c('translator', 'revisor2')){
+        ## only translator and revisor2 file are assigned by me
+        role <- match.arg(role)
+        lbmisc::ascii_header(role)
+        ## check for user permissions
+        allowed_users <- check_allowed_users(users, role)
+        ## check for unavailable sandboxes
+        allowed_users <- check_sandbox(allowed_users, role)
+        ## controllo compiti
+        allowed_users <- check_homework(allowed_users, role)
+        ## determina i file assegnabili sulla base del nome
+        assignable_files <- private$avanz$assignable_files(role)
+        ## assegnazioni massime sono il minimo tra i file assegnabili e gli
+        ## utenti ammessi
+        if (length(assignable_files) > 0L) {
+            max_assignments <- min(length(allowed_users), length(assignable_files))
+            assignment_seq <- seq_len(max_assignments)
+            ## messaggio per coloro che hanno fatto domanda ma non vi sono più
+            ## file da assegnare/tradurre
+            if (length(allowed_users) > length(assignable_files)){
+                excluded_users <- allowed_users[- assignment_seq]
+                excluded_users_message(excluded_users)
+            }
+            ## accoppiamento e assegnazione
+            assigned_files <- assignable_files[assignment_seq]
+            assigned_users <- allowed_users[assignment_seq]
+            from_path <- private$prj_path(assigned_files)
+            new_filenames <- sprintf("%s_%s.srt",
+                                     file_path_sans_ext(assigned_files),
+                                     assigned_users)
+            to_path <- private$prj_path(new_f)
+            Map(assign_worker,
+                as.list(assigned_files),
+                as.list(assigned_users),
+                as.list(new_filenames),
+                as.list(from_path),
+                as.list(to_path),
+                as.list(role))
+            ## notify: file list
+            listing(to_path)
+        } else {
+            message('Non vi sono file assegnabili: (terminati, yee).')
+        }
+    }
     
-}    
+    ## assign translate
+    ## ----------------
+    if (length(translate_users) > 0L){
+        try_assign(translate_users, 'translator')
+    } else {
+        message('Non vi sono file assegnabili: (terminati, yee).')
+    }
+
+    ## assign translate
+    ## ----------------
+    if (length(revise2_users) > 0L){
+        try_assign(translate_users, 'revisor2')
+    } else {
+        message('Non vi sono file assegnabili: (terminati, yee).')
+    }
+}
 
 
 ## ----------------------------------------------------------------
@@ -207,6 +265,7 @@ prj <- R6::R6Class(classname = "prj",
                        yt_id = NULL,
                        ## directory e file
                        prj_dir = NULL,
+                       prj_path = function(file) sprintf("%s/%s", private$prj_dir, file),
                        ## filepath e oggetto avanzamento
                        avanz_f = NULL,
                        avanz   = NULL,
@@ -214,130 +273,3 @@ prj <- R6::R6Class(classname = "prj",
                        source_srt_f = NULL,
                        source_srt   = NULL
                    ))
-                       
-
-
-
-
-
-
-
-
-
-assign_trn <- function(trn_f, assignee){
-    ## assegna trn_f = subs_000000.srt a assignee lbraglia
-
-    ## nome nuovo file
-    new_f <- paste0(tools::file_path_sans_ext(trn_f), "_", assignee, ".srt")
-
-    ## modifica il nome su disco
-    
-    ## modifica stato avanzamento e salva su disco
-    private$avanz$assign_trn(old = trn_f, new = new_f, assignee = assignee)  
-    
-}
-
-
-## ----------
-## Translates
-## ----------
-if (length(translate_users) > 0L){
-    ## notify: header
-    lbmisc::ascii_header('translate')
-    ## check for user permissions
-    allowed_users <- check_allowed_users(translate_users, 'translator')
-    ## check for unavailable sandboxes
-    allowed_users <- check_sandbox(allowed_users, 'translator')
-    ## controllo compiti
-    allowed_users <- check_homework(allowed_users, 'translator')
-    ## determina i file assegnabili sulla base del nome
-    assignable_trn <- private$avanz$assignable_trn()
-    ## assegnazioni massime sono il minimo tra i file assegnabili e gli
-    ## utenti ammessi
-    if (length(assignable_trn) > 0L) {
-        max_assignments <- min(length(allowed_users), length(assignable_trn))
-        assignment_seq <- seq_len(max_assignments)
-        ## messaggio per coloro che hanno fatto domanda ma non vi sono più
-        ## file da assegnare/tradurre
-        if (length(allowed_users) > length(assignable_trn)){
-            excluded_users <- allowed_users[- assignment_seq]
-            message(
-                'per alcuni utenti non vi sono file assegnabili ',
-                '(terminati, yee).',
-                '\nSono: ',
-                paste(excluded_users, collapse = ', '),
-                '\n'
-            )
-        }
-
-        ## TODOHERE sono arrivato qui
-        
-        ## preparazione path files
-        from <- paste(prj_dir, assignable, sep = '/')[assignment_seq]
-        new_filenames <- sprintf(
-            "%s_%s.srt",
-            file_path_sans_ext(assignable[assignment_seq]),
-            allowed_users[assignment_seq])
-        to <- paste(prj_dir, new_filenames, sep = '/')
-        
-        Map(file.rename, as.list(from), as.list(to))
-        ## notify: file list
-        listing(to)
-    } else {
-        message('Non vi sono file assegnabili: (terminati, yee).')
-    }
-    
-}
-
-## ----------
-## Revise
-## ----------
-if (length(revise_users) > 0L){
-    ## notify: header
-    ascii_header('revise')
-    ## check for user permissions
-    allowed_users <- check_allowed_users(revise_users, 'revisor')
-    ## check for unavailable sandboxes
-    allowed_users <- check_sandbox(allowed_users, 'revisor1')
-    ## controllo compiti
-    allowed_users <- check_homework(allowed_users, 'revisor')
-
-
-
-    ## determina i file assegnabili sulla base del nome
-    assignable_ptrn <- "^revs_[[:digit:]]{6}_[[:digit:]]{6}\\.srt$"
-    assignable <- list.files(path = prj_dir, pattern = assignable_ptrn)
-    ## assegnazioni massime sono il minimo tra i file assegnabili e gli
-    ## utenti ammessi
-    if (length(assignable) > 0L) {
-        max_assignments <- min(length(allowed_users), length(assignable))
-        assignment_seq <- seq_len(max_assignments)
-        ## messaggio per coloro che hanno fatto domanda ma non vi sono più
-        ## file da assegnare/tradurre
-        if (length(allowed_users) > length(assignable)){
-            excluded_users <- allowed_users[- assignment_seq]
-            message(
-                'per alcuni utenti non vi sono file assegnabili ',
-                '(terminati, yee).',
-                '\nSono: ',
-                paste(excluded_users, collapse = ', '),
-                '\n'
-            )
-        }
-        ## preparazione path files
-        from <- paste(prj_dir, assignable, sep = '/')[assignment_seq]
-        new_filenames <- sprintf(
-            "%s_%s.srt",
-            file_path_sans_ext(assignable[assignment_seq]),
-            allowed_users[assignment_seq])
-        to <- paste(prj_dir, new_filenames, sep = '/')
-        Map(file.rename, as.list(from), as.list(to))
-        ## notify: file list
-        listing(to)
-    } else {
-        message('Non vi sono file assegnabili: (terminati, yee).')
-    }
-    
-}
-
-
