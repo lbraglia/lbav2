@@ -10,7 +10,7 @@ initialize <- function(id, yt_id){
     ## directory e file del progetto
     private$prj_dir  <- sprintf('%s/%s', subs_dir, id)
     private$avanz_f  <- sprintf('%s/%s', private$prj_dir, 'zz_avanzamento.csv')
-    private$avanz    <- avanz$new(private$avanz_f)
+    private$avanz    <- avanz$new(private$avanz_f, id)
     private$source_srt_f <- sprintf('%s/%s.srt', source_dir, id)
 }
 
@@ -282,9 +282,53 @@ mark_progresses <- function(trn_completed_f  = NULL,
     Map(private$avanz$mark_as_completed,
         as.list(compl_rev2), as.list('rev2'))
     
-    ## controlla se ci sono file revisione da creare
-    
+    ## controlla se ci sono file revisione da creare, nel caso fallo e
+    ## notifica
+    revs_todo <- private$avanz$revs2_todo()
+    if (length(revs_todo) > 0){
+        revs_todo_paths <- prj_path(revs_todo)
+        create_rev <- function(f, path){
+            ## obtain trn to cat
+            trns <- private$avanz$get_trn_fn_for_rev2(f)
+            ## create the file
+            cmd <- sprintf("cat %s", paste(trns, collapse = ' '))
+            input <- pipe(cmd)
+            on.exit(close(input))
+            ## file per check con subs editor: parsa proprio l'srt e pulisci
+            rev <- srt$new(id = 'rev', f = input)
+            rev$write(f = path)
+            ## update monitoring
+            private$avanz$revs2_created(f)
+        }
+        Map(create_rev,
+            as.list(revs_todo),
+            as.list(revs_todo_paths))
+        ## Notifica
+        ascii_header('Ready for revision check: file da assegnare')
+        raw_path <- "https://raw.githubusercontent.com/lbraglia/av_it_subs/main"
+        rev_url <- sprintf("%s/%s", raw_path, revs_todo)
+        cat("\n\n", rev_url, "\n\n", sep = '\n')
+        private$user$mention('revisors2')
+    }
 }
+
+## -----------------------------------------------------------
+## create the final srt after revisions
+make_final_srt = function(){
+    ## full paths to revision files
+    revs <- private$prj_path(private$avanz$filenames("rev2"))
+    ## remove BOM by Aegisub
+    rm_bom <- paste(c('dos2unix', revs), collapse = ' ')
+    system(rm_bom)
+    cmd <- sprintf("cat %s", paste(revs, collapse = ' '))
+    input <- pipe(cmd)
+    on.exit(close(input))
+    final_srt <- srt$new(id = 'final_srt', f = input)
+    ## exporting
+    outfile <- private$prj_path(sprintf("%s_final.srt", private$id))
+    final_srt$write(f = outfile)
+}
+
 
 
 ## ----------------------------------------------------------------
@@ -302,7 +346,8 @@ prj <- R6::R6Class(classname = "prj",
                        users = NULL,
                        create_sandbox = create_sandbox,
                        assign = assign,
-                       mark_progresses = mark_progresses
+                       mark_progresses = mark_progresses,
+                       make_final_srt = make_final_srt
                    ),
                    private = list(
                        id = NULL,
@@ -320,118 +365,3 @@ prj <- R6::R6Class(classname = "prj",
 
 
 
-
-
-
-## ## --------------------------------------
-## ## In seguito a comunicazioni sulla chat
-## ## --------------------------------------
-
-
-## trn_to_rev_ratio <- as.integer(args$trn_to_rev_ratio)
-
-
-## ## -----
-## ## utils
-## ## -----
-## ## funzione che lista i revisori
-## list_revisors <- function(){
-##     db <- read.csv("data/users.csv")
-##     revisors <- db[db[,"revisor"], "gh_user"]
-##     cat("\n\n CC revisors: ", sprintf("@%s", revisors), "\n\n")
-## }
-
-
-## ascii_header('mark as completed')
-
-## ## --------------------------------------------------
-## ## check se ci sono gruppi di translate per revisione
-## ## --------------------------------------------------
-
-## ascii_header('Ready for revision check: file da assegnare')
-
-## if (interactive()){
-##     ## testing stuff
-##     setwd("~/av_it_subs")
-##     prj <- 'hnva2'
-##     prj_dir <- "subs/hnva2"
-##     trn_to_rev_ratio <- 6
-## }
-
-## trn   <- c(list.files(path = prj_dir, pattern = 'subs_.*.srt',
-##                       full.names = TRUE), 'asd')
-## compl_trn <- list.files(path = prj_dir, pattern = 'subs_.*_c.srt',
-##                         full.names = TRUE)
-## completed <- trn %in% compl_trn
-## trns <- data.frame(trn, completed, stringsAsFactors = FALSE)
-## trns$group <- gl(n = ceiling(nrow(trns) / trn_to_rev_ratio),
-##                  k = trn_to_rev_ratio)[seq_len(nrow(trns))]
-## trn_spl <- split(trns, f = trns$group)
-
-## revs_maker <- function(g){# g è il df di file del chunkettone da revisione
-##     ## tutti i file del gruppo sono completi
-##     if (all(g$completed)) {
-##         digits <- sort(gsub("^subs_([[:digit:]]{6}).+", "\\1", basename(g$trn)))
-##         first <- digits[1]
-##         last  <- digits[length(digits)]
-##         outfile <- sprintf("%s/revs_%s_%s.srt", prj_dir, first, last)
-##         already_created <- file.exists(outfile)
-##         already_assigned <- length(list.files(
-##             path = prj_dir,
-##             pattern = sprintf('^revs_%s_%s_.+\\.srt', first, last)
-##         )) > 0L
-##         create_it <- ! (already_created || already_assigned)
-##         if (create_it) {
-##             cmd <- sprintf("cat %s", paste(g$trn, collapse = ' '))
-##             input <- pipe(cmd)
-##             on.exit(close(input))
-##             ## file per check con subs editor: parsa proprio l'srt e pulisci
-##             polished_srts <- read_srt(f = input)
-##             write_srt(polished_srts, f = outfile)
-##         }
-##     }
-## }
-
-## tmp <- unlist(lapply(trn_spl, revs_maker))
-
-## todo_rev <- list.files(path = prj_dir,
-##                        pattern = '^revs_[[:digit:]]{6}_[[:digit:]]{6}\\.srt',
-##                        full.names = TRUE)
-
-## raw_path <- "https://raw.githubusercontent.com/lbraglia/av_it_subs/main"
-## rev_url <- sprintf("%s/%s", raw_path, todo_rev)
-
-## cat("\n\n", rev_url, "\n\n", sep = '\n')
-
-## list_revisors()
-
-
-## ## ------------------------------------------------------------
-## ## check se tutte le revisioni sono complete e creazione finale
-## ## ------------------------------------------------------------
-
-## final_checker <- function(r){# r is a path to a revision file
-##     ## check if all completed
-##     all_completed <- all(grepl(pattern = '_c\\.srt$', x = r))
-##     if (all_completed){
-##         outfile <- sprintf("%s/%s_final.srt", prj_dir, prj)
-##         already_created <- file.exists(outfile)
-##         if (!already_created) {
-##             ascii_header('Tutte le revisioni sono complete')
-##             ascii_header('creare il file finale con make final-srt')
-##         }
-##     }
-## }
-
-## avail_revs <- list.files(path = prj_dir,
-##                          pattern = '^revs_[[:digit:]]{6}_[[:digit:]]{6}',
-##                          full.names = TRUE)
-## final_maker(avail_revs)
-
-
-
-
-
-
-
-    

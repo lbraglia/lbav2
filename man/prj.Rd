@@ -15,6 +15,8 @@ classe che rappresenta un progetto
 \item \href{#method-setup}{\code{prj$setup()}}
 \item \href{#method-create_sandbox}{\code{prj$create_sandbox()}}
 \item \href{#method-assign}{\code{prj$assign()}}
+\item \href{#method-mark_progresses}{\code{prj$mark_progresses()}}
+\item \href{#method-make_final_srt}{\code{prj$make_final_srt()}}
 \item \href{#method-clone}{\code{prj$clone()}}
 }
 }
@@ -32,7 +34,7 @@ classe che rappresenta un progetto
 \if{latex}{\out{\hypertarget{method-setup}{}}}
 \subsection{Method \code{setup()}}{
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{prj$setup(chunks_len_mins)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{prj$setup(chunks_len_mins, trn_to_rev_ratio)}\if{html}{\out{</div>}}
 }
 
 }
@@ -51,6 +53,29 @@ classe che rappresenta un progetto
 \subsection{Method \code{assign()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{prj$assign(translate_f, revise2_f)}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-mark_progresses"></a>}}
+\if{latex}{\out{\hypertarget{method-mark_progresses}{}}}
+\subsection{Method \code{mark_progresses()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{prj$mark_progresses(
+  trn_completed_f = NULL,
+  rev1_started_f = NULL,
+  rev1_completed_f = NULL,
+  rev2_completed_f = NULL
+)}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-make_final_srt"></a>}}
+\if{latex}{\out{\hypertarget{method-make_final_srt}{}}}
+\subsection{Method \code{make_final_srt()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{prj$make_final_srt()}\if{html}{\out{</div>}}
 }
 
 }

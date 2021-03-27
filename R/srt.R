@@ -63,7 +63,7 @@ srt_parser <- function(x){
     text_pos  <- seq_along(x) %without% 1:2
     id    <- x[id_pos]
     times <- x[times_pos]
-    text  <- x[text_pos]
+    text  <- lbmisc::rm_spaces(x[text_pos])
     ## elaborazioni
     times <- gsub(" ", "", times) # togliere eventuali spazi bianghi
     ## estrazione tempo inizio 
