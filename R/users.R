@@ -2,6 +2,7 @@ initialize <- function(users_f) {
     private$data <- utils::read.csv(users_f)
 }
 
+#' @export
 users <- R6::R6Class('users',
                      public = list(
                          initialize = initialize,
@@ -18,7 +19,7 @@ users <- R6::R6Class('users',
                              tmp[tmp$revisor2, 'gh_user']
                          },
                          print = function(){
-                             print(private$data)
+                             print(private$data, row.names = FALSE)
                          },
                          mention = function(role = c('translator', 'revisor1', 'revisor2')){
                              role <- match.arg(role)

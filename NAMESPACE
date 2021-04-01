@@ -2,7 +2,9 @@
 
 export(avanz)
 export(prj)
+export(users)
 importFrom(R6,R6Class)
+importFrom(lbmisc,"%nin%")
 importFrom(lbmisc,"%without%")
 importFrom(lbmisc,ascii_header)
 importFrom(lbmisc,col2hex)

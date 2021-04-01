@@ -15,10 +15,11 @@ initialize <- function(id, yt_id){
 }
 
 ## funzione della main class
-setup <- function(chunks_len_mins, trn_to_rev_ratio){
+setup <- function(chunks_len_mins = 5, trn_to_rev_ratio = 6){
     ## import and split source
     private$source_srt <- srt$new(id = 'source',
                                   f = private$source_srt_f)
+    if (!dir.exists(private$prj_dir)) dir.create(private$prj_dir)
     chunks <- private$source_srt$split(chunks_len_mins = chunks_len_mins,
                                        yt_id = private$yt_id,
                                        output_dir = private$prj_dir)
@@ -33,15 +34,18 @@ setup <- function(chunks_len_mins, trn_to_rev_ratio){
 ## importa i login utente github da un file
 ## f è un path ad un file che include login di github
 lines_from_file <- function(f){
-    users <- if (file.exists(f)) readLines(args$sandbox_file) else NULL
-    users %without% ''
+    lines <- if (file.exists(f)) readLines(f) else NULL
+    lines %without% ''
 }
 
 ## genera il nome file (srt) di un sandbox in base a login e tipologia
 sandbox_file <- function(user, role = c("translator", "revisor1", 'revisor2')){
     role <- match.arg(role)
-    postfix <- switch(role, translator = "trn", revisor1 = "rev1", revisor1 = "rev2")
-    sprintf('%s_%s.srt', user, postfix)
+    postfix <- switch(role,
+                      translator = "trn",
+                      revisor1 = "rev1",
+                      revisor1 = "rev2")
+    sprintf('subs/sandbox/%s_%s.srt', user, postfix)
 }
 
 ## funzione che prende in input dei login github e fa il check che
@@ -76,7 +80,7 @@ create_sandbox <- function(sandbox_f, rev1_sandbox_f){
         ## notify: header
         lbmisc::ascii_header('sandbox traduttori')
         ## check permissions
-        allowed_users <- check_allowed_users(sandbox_users, 'translator')
+        allowed_users <- private$check_allowed_users(sandbox_users, 'translator')
         ## files and dirs
         files <- sandbox_file(allowed_users, role = "translator")
         ## copia file
@@ -92,7 +96,7 @@ create_sandbox <- function(sandbox_f, rev1_sandbox_f){
         ## notify: header
         lbmisc::ascii_header('sandbox revisori (fase 1)')
         ## check permissions
-        allowed_users <- check_allowed_users(rev1_sandbox_users, 'revisor')
+        allowed_users <- private$check_allowed_users(rev1_sandbox_users, 'revisor1')
         ## files and dirs
         files <- sandbox_file(allowed_users, role = "revisor1")
         ## copia file
@@ -117,8 +121,7 @@ create_sandbox <- function(sandbox_f, rev1_sandbox_f){
 check_sandbox <- function(users, role = c('translator', 'revisor1', 'revisor2')){
     
     role <- match.arg(role)
-    users_sandbox <- sprintf('subs/sandbox/%s',
-                             sandbox_file(users, role = role))
+    users_sandbox <- sandbox_file(users, role = role)
     no_sandbox <- users[!file.exists(users_sandbox)]
     if (length(no_sandbox) > 0L){
         msg <- c("Alcuni utenti non hanno ancora il file di sandbox da",
@@ -186,7 +189,7 @@ assign <- function(translate_f, revise2_f)
         role <- match.arg(role)
         lbmisc::ascii_header(role)
         ## check for user permissions
-        allowed_users <- check_allowed_users(users, role)
+        allowed_users <- private$check_allowed_users(users, role)
         ## check for unavailable sandboxes
         allowed_users <- check_sandbox(allowed_users, role)
         ## controllo compiti
@@ -330,6 +333,10 @@ make_final_srt = function(){
 }
 
 
+list_assignee <- function(){
+    private$avanz$list_assignee()
+}
+
 
 ## ----------------------------------------------------------------
 ## Main class
@@ -347,7 +354,8 @@ prj <- R6::R6Class(classname = "prj",
                        create_sandbox = create_sandbox,
                        assign = assign,
                        mark_progresses = mark_progresses,
-                       make_final_srt = make_final_srt
+                       make_final_srt = make_final_srt,
+                       list_assignee =  list_assignee
                    ),
                    private = list(
                        id = NULL,
@@ -360,8 +368,6 @@ prj <- R6::R6Class(classname = "prj",
                        avanz   = NULL,
                        ## file e oggetto sorgente
                        source_srt_f = NULL,
-                       source_srt   = NULL
+                       source_srt   = NULL,
+                       check_allowed_users = check_allowed_users
                    ))
-
-
-

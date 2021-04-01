@@ -17,6 +17,7 @@ classe che rappresenta un progetto
 \item \href{#method-assign}{\code{prj$assign()}}
 \item \href{#method-mark_progresses}{\code{prj$mark_progresses()}}
 \item \href{#method-make_final_srt}{\code{prj$make_final_srt()}}
+\item \href{#method-list_assignee}{\code{prj$list_assignee()}}
 \item \href{#method-clone}{\code{prj$clone()}}
 }
 }
@@ -34,7 +35,7 @@ classe che rappresenta un progetto
 \if{latex}{\out{\hypertarget{method-setup}{}}}
 \subsection{Method \code{setup()}}{
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{prj$setup(chunks_len_mins, trn_to_rev_ratio)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{prj$setup(chunks_len_mins = 5, trn_to_rev_ratio = 6)}\if{html}{\out{</div>}}
 }
 
 }
@@ -76,6 +77,15 @@ classe che rappresenta un progetto
 \subsection{Method \code{make_final_srt()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{prj$make_final_srt()}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-list_assignee"></a>}}
+\if{latex}{\out{\hypertarget{method-list_assignee}{}}}
+\subsection{Method \code{list_assignee()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{prj$list_assignee()}\if{html}{\out{</div>}}
 }
 
 }

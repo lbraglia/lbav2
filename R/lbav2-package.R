@@ -1,5 +1,6 @@
 #' @importFrom R6 R6Class
 #' @importFrom lbmisc %without%
+#' @importFrom lbmisc %nin%
 #' @importFrom lbmisc col2hex
 #' @importFrom lbmisc to_00_char
 #' @importFrom lbmisc ascii_header

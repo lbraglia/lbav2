@@ -132,7 +132,7 @@ avanz <-
                     if (file.exists(private$file)){
                         private$data <- utils::read.csv(file = private$file)
                     } else {
-                        warning(private$file, 'non esistente')
+                        warning(private$file, ' non esistente.')
                     }
                 },
 
@@ -191,7 +191,7 @@ avanz <-
                                         rev2_completed  = FALSE)
                     self$to_disk(newdata = avanz)
                 },
-                
+
                 ## obtain assignable by role
                 assignable_files = function(role = c('translator', 'revisor1', 'revisor2')){
                     role <- match.arg(role)
@@ -218,12 +218,15 @@ avanz <-
                 ## lista i traduttori per un determinato progetto
                 list_assignee = function(){
                     tmp <- private$data
-                    assigned <- tmp[tmp$trn_assigned,
-                                    c("trn_assignee", 'trn_start')]
-                    times <- assigned$trn_start
-                    usr <- lbprivee::av_yt_gh_user_to_id(assigned$trn_assignee)
-                    cat(apply(data.frame(times, usr), 1, paste,
-                              collapse = ' '), sep = '\n')
+                    vars <- c("trn_start",
+                              "trn_assignee", "rev1_assignee", "rev2_assignee")
+                    tmp <- tmp[, vars]
+                    tmp[, 2:4] <-  lapply(tmp[, 2:4],
+                                          lbprivee::av_yt_gh_user_to_id)
+                    names(tmp) <- c("Time", "Translate", "Rev1", "Rev2")
+                    cat("```\n")
+                    print(tmp, row.names = FALSE)
+                    cat("```\n")
                 },
 
                 ## lista i file non finiti per un dato traduttore o revisore
