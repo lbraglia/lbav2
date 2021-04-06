@@ -1,7 +1,8 @@
 ## ----------------------------------------------------------------------
 ## Initialize the project in memory (every time) and setup (at beginning)
 ## ----------------------------------------------------------------------
-initialize <- function(id, yt_id){
+initialize <- function(id = NULL, yt_id = NULL){
+    if (is.null(id) || is.null(yt_id)) stop("must specify id and yt_id")
     ## id
     private$id      <- id
     private$yt_id   <- yt_id
@@ -33,7 +34,7 @@ setup <- function(chunks_len_mins = 5, trn_to_rev_ratio = 6){
 ## --------------
 ## importa i login utente github da un file
 ## f è un path ad un file che include login di github
-lines_from_file <- function(f){
+lines_from_file <- function(f = ''){
     lines <- if (file.exists(f)) readLines(f) else NULL
     lines %without% ''
 }
@@ -72,7 +73,7 @@ check_allowed_users <- function(users, role = c('translator', 'revisor1', 'revis
 }
 
 ## funzione della main class
-create_sandbox <- function(sandbox_f, rev1_sandbox_f){
+create_sandbox <- function(sandbox_f = '', rev1_sandbox_f = ''){
     sandbox_users      <- lines_from_file(sandbox_f)
     rev1_sandbox_users <- lines_from_file(rev1_sandbox_f)
     ## sandbox di translators
@@ -140,17 +141,17 @@ check_sandbox <- function(users, role = c('translator', 'revisor1', 'revisor2'))
 ## da translator o revisor
 check_homework <- function(users, role = c("translator", "revisor1", "revisor2")){
     role <- match.arg(role)
-    homework_done <- function(u, role = role) {
+    homework_done <- function(u) {
         ## controlla se un singolo utente ha fatto i compiti
         file_non_finiti <-
-            private$avanz$unfinished_homeworks(user = user, role = role)
+            private$avanz$unfinished_homeworks(user = u, role = role)
 
         if (length(file_non_finiti) > 0L) {
             warning(u, ' has unfinished files: ',
                     paste(file_non_finiti, collapse = ' '),
                     '\n  Ignoring his/her request.')
         }
-        all_complete <- length(non_finiti) == 0L
+        all_complete <- length(file_non_finiti) == 0L
         all_complete
     }
     allowed_users <- Filter(f = homework_done, users)
@@ -160,7 +161,7 @@ check_homework <- function(users, role = c("translator", "revisor1", "revisor2")
 
 
 ## main class method
-assign <- function(translate_f, revise2_f)
+assign <- function(translate_f = '', revise2_f = '')
 {
     ## update aggiornamento: salva su disco
     on.exit(private$avanz$to_disk())
@@ -193,7 +194,7 @@ assign <- function(translate_f, revise2_f)
         ## check for unavailable sandboxes
         allowed_users <- check_sandbox(allowed_users, role)
         ## controllo compiti
-        allowed_users <- check_homework(allowed_users, role)
+        allowed_users <- private$check_homework(allowed_users, role)
         ## determina i file assegnabili sulla base del nome
         assignable_files <- private$avanz$assignable_files(role)
         ## assegnazioni massime sono il minimo tra i file assegnabili e gli
@@ -214,7 +215,7 @@ assign <- function(translate_f, revise2_f)
             new_filenames <- sprintf("%s_%s.srt",
                                      file_path_sans_ext(assigned_files),
                                      assigned_users)
-            to_path <- private$prj_path(new_f)
+            to_path <- private$prj_path(new_filenames)
             Map(assign_worker,
                 as.list(assigned_files),
                 as.list(assigned_users),
@@ -231,18 +232,14 @@ assign <- function(translate_f, revise2_f)
     
     ## assign translate
     ## ----------------
-    if (length(translate_users) > 0L){
+    if (length(translate_users) > 0L) {
         try_assign(translate_users, 'translator')
-    } else {
-        message('Non vi sono file assegnabili: (terminati, yee).')
     }
 
     ## assign translate
     ## ----------------
-    if (length(revise2_users) > 0L){
+    if (length(revise2_users) > 0L) {
         try_assign(translate_users, 'revisor2')
-    } else {
-        message('Non vi sono file assegnabili: (terminati, yee).')
     }
 }
 
@@ -258,10 +255,10 @@ get_rev1_user <- function(f) {
     users[id]
 }
 
-mark_progresses <- function(trn_completed_f  = NULL,
-                            rev1_started_f   = NULL,
-                            rev1_completed_f = NULL,
-                            rev2_completed_f = NULL)
+mark_progresses <- function(trn_completed_f  = '',
+                            rev1_started_f   = '',
+                            rev1_completed_f = '',
+                            rev2_completed_f = '')
 {
     ## update aggiornamento: salva su disco
     on.exit(private$avanz$to_disk())
@@ -337,6 +334,10 @@ list_assignee <- function(){
     private$avanz$list_assignee()
 }
 
+monitoring <- function(){
+    private$avanz$monitoring()
+}
+
 
 ## ----------------------------------------------------------------
 ## Main class
@@ -355,7 +356,8 @@ prj <- R6::R6Class(classname = "prj",
                        assign = assign,
                        mark_progresses = mark_progresses,
                        make_final_srt = make_final_srt,
-                       list_assignee =  list_assignee
+                       list_assignee =  list_assignee,
+                       monitoring = monitoring
                    ),
                    private = list(
                        id = NULL,
@@ -369,5 +371,6 @@ prj <- R6::R6Class(classname = "prj",
                        ## file e oggetto sorgente
                        source_srt_f = NULL,
                        source_srt   = NULL,
-                       check_allowed_users = check_allowed_users
+                       check_allowed_users = check_allowed_users,
+                       check_homework = check_homework
                    ))
