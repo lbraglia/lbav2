@@ -198,7 +198,7 @@ avanz <-
                         row <- tmp$trn_completed & (!tmp$rev1_assigned)
                         tmp[row, "trn_filename"]
                     } else if (role == 'revisor2') {
-                        tmp[!tmp$rev2_assigned, "rev2_filename"]
+                        unique(tmp[with(tmp, rev2_created & !rev2_assigned), "rev2_filename"])
                     }
                 },
 
@@ -278,8 +278,8 @@ avanz <-
                     phase <- match.arg(phase)
                     tmp <- private$data
                     completed_var <- sprintf("%s_completed", phase)
-                    filename_var <- switch(ftype,
-                                           trn = "trn_filename",
+                    filename_var <- switch(phase,
+                                           trn  = "trn_filename",
                                            rev1 = "trn_filename",
                                            rev2 = "rev2_filename")
                     tmp[tmp[, filename_var] %in% file, completed_var] <- TRUE

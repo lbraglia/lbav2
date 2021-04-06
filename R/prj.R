@@ -48,8 +48,8 @@ sandbox_file <- function(user, role = c("translator", "revisor1", 'revisor2')){
     role <- match.arg(role)
     postfix <- switch(role,
                       translator = "trn",
-                      revisor1 = "rev1",
-                      revisor1 = "rev2")
+                      revisor1   = "rev1",
+                      revisor2   = "rev2")
     sprintf('subs/sandbox/%s_%s.srt', user, postfix)
 }
 
@@ -228,8 +228,14 @@ assign <- function(translate_f = '', revise2_f = '')
                 as.list(from_path),
                 as.list(to_path),
                 as.list(role))
-            ## notify: file list
-            listing(to_path)
+            ## notify: file listing (trn) or github paths (rev2)
+            if (role == 'translator') {
+                listing(to_path)
+            } else if (role == 'revisor2'){
+                gh_path <- "https://raw.githubusercontent.com/lbraglia/av_it_subs/main"
+                rev2_urls <- sprintf("%s/%s", gh_path, private$prj_path(to_path))
+                listing(rev2_urls)
+            }
         } else {
             message('Non vi sono file assegnabili: (terminati, yee).')
         }
@@ -244,20 +250,16 @@ assign <- function(translate_f = '', revise2_f = '')
     ## assign translate
     ## ----------------
     if (length(revise2_users) > 0L) {
-        try_assign(translate_users, 'revisor2')
+        try_assign(revise2_users, 'revisor2')
     }
 }
 
 
 ## -------------------------------------------------------
 
-get_rev1_user <- function(f) {
-    title <- sprintf('Who assigned %s', f)
-    users <- private$users$revisors1()
-    id <- utils::menu(title = title,
-                      choices = users,
-                      graphics = TRUE)
-    users[id]
+basename2 <- function(x) {
+    if (is.null(x)) NULL
+    else basename(x)
 }
 
 mark_progresses <- function(trn_completed_f  = '',
@@ -270,51 +272,65 @@ mark_progresses <- function(trn_completed_f  = '',
     on.exit(private$avanz$to_disk())
 
     ## rev1 iniziate
-    started_rev1 <- lines_from_file(rev1_started_f)
-    rev1_assignee <- unlist(lapply(started_rev1, get_rev1_user))
-    Map(private$avanz$mark_as_started,
-        as.list(started_rev1),
-        as.list(rev1_assignee),
-        as.list('revisor1'))
+    started_rev1 <- basename2(lines_from_file(rev1_started_f))
+    if (length(started_rev1) > 0L) {
+        get_rev1_user <- function(f) {
+            title <- sprintf('Who assigned %s', f)
+            users <- self$users$revisors1()
+            id <- utils::menu(title = title,
+                              choices = users,
+                              graphics = TRUE)
+            users[id]
+        }
+        rev1_assignee <- unlist(lapply(started_rev1, get_rev1_user))
+        Map(private$avanz$mark_as_started,
+            as.list(started_rev1),
+            as.list(rev1_assignee),
+            as.list('revisor1'))
+    }
     
     ## trn, rev1 e rev2 completate
-    compl_trn  <- lines_from_file(trn_completed_f)
-    compl_rev1 <- lines_from_file(rev1_completed_f)
-    compl_rev2 <- lines_from_file(rev2_completed_f)
-    Map(private$avanz$mark_as_completed,
-        as.list(compl_trn), as.list('trn'))
+    compl_trn  <- basename2(lines_from_file(trn_completed_f))
+    if (length(compl_trn) > 0L){
+        Map(private$avanz$mark_as_completed,
+            as.list(compl_trn), as.list('trn'))
+    }
+    ## 
+    compl_rev1 <- basename2(lines_from_file(rev1_completed_f))
+    if (length(compl_rev1) > 0L){
     Map(private$avanz$mark_as_completed,
         as.list(compl_rev1), as.list('rev1'))
+    }
+    ## 
+    compl_rev2 <- basename2(lines_from_file(rev2_completed_f))
+    if (length(compl_rev2) > 0L){
     Map(private$avanz$mark_as_completed,
         as.list(compl_rev2), as.list('rev2'))
+    }
     
     ## controlla se ci sono file revisione da creare, nel caso fallo e
     ## notifica
     revs_todo <- private$avanz$revs2_todo()
     if (length(revs_todo) > 0){
-        revs_todo_paths <- prj_path(revs_todo)
-        create_rev <- function(f, path){
+        create_rev <- function(f){
             ## obtain trn to cat
             trns <- private$avanz$get_trn_fn_for_rev2(f)
             ## create the file
-            cmd <- sprintf("cat %s", paste(trns, collapse = ' '))
+            cmd <- sprintf("cat %s", paste(private$prj_path(trns), collapse = ' '))
             input <- pipe(cmd)
             on.exit(close(input))
             ## file per check con subs editor: parsa proprio l'srt e pulisci
-            rev <- srt$new(id = 'rev', f = input)
-            rev$write(f = path)
+            rev <- srt$new(id = f, f = input#, validate = FALSE
+                           )
+            rev$write(f = private$prj_path(f))
             ## update monitoring
             private$avanz$revs2_created(f)
         }
-        Map(create_rev,
-            as.list(revs_todo),
-            as.list(revs_todo_paths))
+        lapply(create_rev, as.list(revs_todo))
         ## Notifica
-        ascii_header('Ready for revision check: file da assegnare')
-        raw_path <- "https://raw.githubusercontent.com/lbraglia/av_it_subs/main"
-        rev_url <- sprintf("%s/%s", raw_path, revs_todo)
-        cat("\n\n", rev_url, "\n\n", sep = '\n')
-        private$user$mention('revisors2')
+        ascii_header('Ready for revision check: file da assegnare')        
+        cat("\n\n", private$prj_path(revs_todo), "\n\n", sep = '\n')
+        self$users$mention('revisor2')
     }
 }
 

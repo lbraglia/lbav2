@@ -117,7 +117,7 @@ srt_parser <- function(x){
 ## READ SRT
 ## --------
 
-read_srt <- function(f = NULL, comment = '##', set_id_as_prog = TRUE){
+read_srt <- function(f = NULL, comment = '##', set_id_as_prog = TRUE, validate = TRUE){
     lines <- readLines(f)
     ## remove comments
     comment_lines <- grepl(sprintf("^%s", comment), lines)
@@ -152,7 +152,7 @@ read_srt <- function(f = NULL, comment = '##', set_id_as_prog = TRUE){
         print(check)
     }
     ## check/validazione del contenuto del srt parsato
-    lapply(parsed_srt, srt_validator)
+    if (validate) lapply(parsed_srt, srt_validator)
     ## per fixare i collage (o fare quello che normalmente fanno i subeditor)
     if (set_id_as_prog) {
         id_to_prog <- function(s, p) {s$id <- p; s}
