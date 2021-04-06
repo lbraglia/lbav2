@@ -17,10 +17,14 @@ initialize <- function(id = NULL, yt_id = NULL){
 
 ## funzione della main class
 setup <- function(chunks_len_mins = 5, trn_to_rev_ratio = 6){
+
+    if (dir.exists(private$prj_dir))
+        stop(private$prj_dir, " already existing. Aborting.")
+    else dir.create(private$prj_dir)
+
     ## import and split source
     private$source_srt <- srt$new(id = 'source',
                                   f = private$source_srt_f)
-    if (!dir.exists(private$prj_dir)) dir.create(private$prj_dir)
     chunks <- private$source_srt$split(chunks_len_mins = chunks_len_mins,
                                        yt_id = private$yt_id,
                                        output_dir = private$prj_dir)
