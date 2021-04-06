@@ -128,6 +128,7 @@ avanz <-
                         private$data <- utils::read.csv(file = private$file)
                     } else {
                         warning(private$file, ' non esistente.')
+                        invisible(NULL)
                     }
                 },
 

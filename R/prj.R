@@ -167,7 +167,8 @@ check_homework <- function(users, role = c("translator", "revisor1", "revisor2")
 ## main class method
 assign <- function(translate_f = '', revise2_f = '')
 {
-    ## update aggiornamento: salva su disco
+    ## aggiorna dati in memoria e salva su disco alla fine
+    ## private$avanz$from_disk()
     on.exit(private$avanz$to_disk())
 
     translate_users <- lines_from_file(translate_f)
@@ -264,7 +265,8 @@ mark_progresses <- function(trn_completed_f  = '',
                             rev1_completed_f = '',
                             rev2_completed_f = '')
 {
-    ## update aggiornamento: salva su disco
+    ## updates dei dati interni e salvataggio a fine lavoro
+    ## private$avanz$from_disk()
     on.exit(private$avanz$to_disk())
 
     ## rev1 iniziate
