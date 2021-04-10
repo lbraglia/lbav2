@@ -252,7 +252,7 @@ srt_stats <- function(view = TRUE){
                        cps                 ,
                        nchars_longest_line ,
                        nlines              ,
-                       link                ,
+                       ## link                ,
                        high_cps            ,      
                        long_line           ,     
                        too_many_lines      ,
@@ -272,8 +272,8 @@ srt_stats <- function(view = TRUE){
                          as.Table = TRUE)
     ## View
     if (view){
-        cmd <- sprintf('libreoffice --calc %s', outfile)
-        system2(cmd)
+        cmd <- sprintf('libreoffice --calc %s &', outfile)
+        system(cmd)
     }
 }
 

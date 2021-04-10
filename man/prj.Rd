@@ -17,8 +17,10 @@ classe che rappresenta un progetto
 \item \href{#method-assign}{\code{prj$assign()}}
 \item \href{#method-mark_progresses}{\code{prj$mark_progresses()}}
 \item \href{#method-make_final_srt}{\code{prj$make_final_srt()}}
+\item \href{#method-final_srt_stats}{\code{prj$final_srt_stats()}}
 \item \href{#method-list_assignee}{\code{prj$list_assignee()}}
 \item \href{#method-monitoring}{\code{prj$monitoring()}}
+\item \href{#method-git_log_analysis}{\code{prj$git_log_analysis()}}
 \item \href{#method-clone}{\code{prj$clone()}}
 }
 }
@@ -77,7 +79,16 @@ classe che rappresenta un progetto
 \if{latex}{\out{\hypertarget{method-make_final_srt}{}}}
 \subsection{Method \code{make_final_srt()}}{
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{prj$make_final_srt()}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{prj$make_final_srt(stats = TRUE)}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-final_srt_stats"></a>}}
+\if{latex}{\out{\hypertarget{method-final_srt_stats}{}}}
+\subsection{Method \code{final_srt_stats()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{prj$final_srt_stats()}\if{html}{\out{</div>}}
 }
 
 }
@@ -96,6 +107,15 @@ classe che rappresenta un progetto
 \subsection{Method \code{monitoring()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{prj$monitoring()}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-git_log_analysis"></a>}}
+\if{latex}{\out{\hypertarget{method-git_log_analysis}{}}}
+\subsection{Method \code{git_log_analysis()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{prj$git_log_analysis()}\if{html}{\out{</div>}}
 }
 
 }

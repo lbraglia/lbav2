@@ -277,10 +277,9 @@ mark_progresses <- function(trn_completed_f  = '',
         get_rev1_user <- function(f) {
             title <- sprintf('Who assigned %s', f)
             users <- self$users$revisors1()
-            id <- utils::menu(title = title,
-                              choices = users,
-                              graphics = TRUE)
-            users[id]
+            res <- lbmisc::menu_ni(title = title, choices = users)
+            ## users[id]
+            res
         }
         rev1_assignee <- unlist(lapply(started_rev1, get_rev1_user))
         Map(private$avanz$mark_as_started,
@@ -336,7 +335,7 @@ mark_progresses <- function(trn_completed_f  = '',
 
 ## -----------------------------------------------------------
 ## create the final srt after revisions
-make_final_srt = function(){
+make_final_srt <- function(stats = TRUE){
     ## full paths to revision files
     revs <- private$prj_path(private$avanz$filenames("rev2"))
     ## remove BOM by Aegisub
@@ -345,12 +344,18 @@ make_final_srt = function(){
     cmd <- sprintf("cat %s", paste(revs, collapse = ' '))
     input <- pipe(cmd)
     on.exit(close(input))
-    final_srt <- srt$new(id = 'final_srt', f = input)
+    final_srt <- srt$new(id = private$id, f = input)
     ## exporting
     outfile <- private$prj_path(sprintf("%s_final.srt", private$id))
     final_srt$write(f = outfile)
+    if (stats) final_srt$stats()
 }
 
+final_srt_stats <- function(){
+    file <- private$prj_path(sprintf("%s_final.srt", private$id))
+    final_srt <- srt$new(id = private$id, f = file)
+    final_srt$stats()
+}
 
 list_assignee <- function(){
     private$avanz$list_assignee()
@@ -358,6 +363,24 @@ list_assignee <- function(){
 
 monitoring <- function(){
     private$avanz$monitoring()
+}
+
+git_log_analysis <- function(){
+    projs <- list.files('subs', full.names = TRUE)
+    exclude_dirs <- projs %without% private$prj_dir
+    exclude_dirs <- paste0(exclude_dirs, '/')
+    exclude_dirs <- paste(sprintf("-x file:'%s'", exclude_dirs),
+                          collapse = ' ')
+    log_file <- sprintf("/tmp/av_it_subs_%s_log_analysis.html", private$id)
+    cmd <- paste("gitinspector  -x author:'Luca Braglia'",
+                 exclude_dirs,
+                 "-f srt -F html -mrT . >",
+                 log_file,
+                 " && firefox ",
+                 log_file,
+                 collapse = ' ')
+    cat(c("Executing:", "\n", cmd, '\n'), sep = '')
+    system(cmd)
 }
 
 
@@ -378,8 +401,10 @@ prj <- R6::R6Class(classname = "prj",
                        assign = assign,
                        mark_progresses = mark_progresses,
                        make_final_srt = make_final_srt,
+                       final_srt_stats = final_srt_stats,
                        list_assignee =  list_assignee,
-                       monitoring = monitoring
+                       monitoring = monitoring,
+                       git_log_analysis = git_log_analysis
                    ),
                    private = list(
                        id = NULL,
@@ -396,3 +421,6 @@ prj <- R6::R6Class(classname = "prj",
                        check_allowed_users = check_allowed_users,
                        check_homework = check_homework
                    ))
+
+
+
