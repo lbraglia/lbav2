@@ -277,7 +277,7 @@ mark_progresses <- function(trn_completed_f  = '',
         get_rev1_user <- function(f) {
             title <- sprintf('Who assigned %s', f)
             users <- self$users$revisors1()
-            res <- lbmisc::menu_ni(title = title, choices = users)
+            res <- lbmisc::menu2(title = title, choices = users)
             ## users[id]
             res
         }
