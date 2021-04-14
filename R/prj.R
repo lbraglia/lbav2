@@ -451,13 +451,14 @@ git_log_analysis <- function(){
 menu <- function(){
 
     choices <- matrix(c(
-        "1", "Create sandboxes",
-        "2", "Assign TRN or REV2",
-        "3", "Mark progresses",
-        "4", "Monitoring",
-        "5", "Make final srt",
-        "6", "Final SRT stats",
-        "7", "List assignee"
+        "1", "Setup",
+        "2", "Create sandboxes",
+        "3", "Assign TRN or REV2",
+        "4", "Mark progresses",
+        "5", "Monitoring",
+        "6", "Make final srt",
+        "7", "Final SRT stats",
+        "0", "List assignee"
         ),
         ncol = 2,
         byrow = TRUE
@@ -471,13 +472,14 @@ menu <- function(){
                               return   = "index",
                               strict   = TRUE)
         switch(as.character(rval),
-               "1" = self$create_sandbox(),
-               "2" = self$assign(),
-               "3" = self$mark_progresses(),
-               "4" = self$monitoring(),
-               "5" = self$make_final_srt(),
-               "6" = self$final_srt_stats(),
-               "7" = self$list_assignee())
+               "1" = self$setup(),
+               "2" = self$create_sandbox(),
+               "3" = self$assign(),
+               "4" = self$mark_progresses(),
+               "5" = self$monitoring(),
+               "6" = self$make_final_srt(),
+               "7" = self$final_srt_stats(),
+               "8" = self$list_assignee())
         if (is.na(rval)) break
     }
 }
