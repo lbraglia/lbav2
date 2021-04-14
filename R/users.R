@@ -8,15 +8,15 @@ users <- R6::R6Class('users',
                          initialize = initialize,
                          translators = function(){
                              tmp <- private$data
-                             tmp[tmp$translator, 'gh_user']
+                             sort(tmp[tmp$translator, 'gh_user'])
                          },
                          revisors1 = function(){
                              tmp <- private$data
-                             tmp[tmp$revisor1, 'gh_user']
+                             sort(tmp[tmp$revisor1, 'gh_user'])
                          },
                          revisors2 = function(){
                              tmp <- private$data
-                             tmp[tmp$revisor2, 'gh_user']
+                             sort(tmp[tmp$revisor2, 'gh_user'])
                          },
                          print = function(){
                              print(private$data, row.names = FALSE)

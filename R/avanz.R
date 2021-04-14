@@ -202,6 +202,22 @@ avanz <-
                     }
                 },
 
+                ## lista i file che debbono essere completati (assegnati e non terminati) per fase
+                to_be_completed_files = function(role = c('translator', 'revisor1', 'revisor2')){
+                    role <- match.arg(role)
+                    tmp <- private$data                    
+                    if (role == 'translator') {
+                        row <- tmp$trn_assigned & (!tmp$trn_completed)
+                        tmp[row, "trn_filename"]
+                    } else if (role == 'revisor1') {
+                        row <- tmp$rev1_assigned & (!tmp$rev1_completed)
+                        tmp[row, "trn_filename"]
+                    } else if (role == 'revisor2') {
+                        row <- tmp$rev2_assigned & (!tmp$rev2_completed)
+                        unique(tmp[row, "rev2_filename"])
+                    }
+                },
+
                 ## return filenames for a phase
                 filenames = function(phase = c('trn', 'rev2')){
                     phase <- match.arg(phase)
@@ -327,7 +343,7 @@ avanz <-
                     tmp <- private$data
                     sort(tmp[tmp$rev2_filename %in% f, 'trn_filename'])
                 },
-                
+               
                 monitoring = monitoring
                 
             ),

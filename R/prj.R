@@ -36,11 +36,28 @@ setup <- function(chunks_len_mins = 5, trn_to_rev_ratio = 6){
 ## --------------
 ## Create sandbox
 ## --------------
-## importa i login utente github da un file
-## f è un path ad un file che include login di github
-lines_from_file <- function(f = ''){
-    lines <- if (file.exists(f)) readLines(f) else NULL
-    lines %without% ''
+## importa le linee da un file o da un menu con scelte pre-specificate
+from_file_or_menu <- function(f = NULL,
+                              ## parameters passed to lbmisc::menu2
+                              m_choices  = NULL,
+                              m_title    = NULL,
+                              m_multiple = TRUE,
+                              m_strict   = TRUE)
+{
+    ## dai la priorità al file se specificato, altrimento prendi da menu
+    if (is.null(f)){
+        if (is.null(m_choices)) stop("No file nor menu choices. stopping")
+        rval <- lbmisc::menu2(choices   = m_choices,
+                              title    = m_title,
+                              multiple = m_multiple,
+                              return   = "values",
+                              strict   = m_strict)
+        if (is.na(rval)) rval <- character(0)
+    } else {
+        rval <- if (file.exists(f)) readLines(f) else NULL
+        rval <- rval  %without% ''
+    }
+    rval
 }
 
 ## genera il nome file (srt) di un sandbox in base a login e tipologia
@@ -77,9 +94,21 @@ check_allowed_users <- function(users, role = c('translator', 'revisor1', 'revis
 }
 
 ## funzione della main class
-create_sandbox <- function(sandbox_f = '', rev1_sandbox_f = ''){
-    sandbox_users      <- lines_from_file(sandbox_f)
-    rev1_sandbox_users <- lines_from_file(rev1_sandbox_f)
+create_sandbox <- function(sandbox_f = NULL, rev1_sandbox_f = NULL){
+
+    sandbox_users<- from_file_or_menu(
+        sandbox_f,
+        m_title    = 'Specificare utenti (TRN) per sandbox',
+        m_choices  = self$users$translators(),
+        m_multiple = TRUE,
+        m_strict   = TRUE)
+    rev1_sandbox_users <- from_file_or_menu(
+        rev1_sandbox_f,
+        m_title    = 'Specificare utenti (REV1) per sandbox',
+        m_choices  = self$users$revisors1(),
+        m_multiple = TRUE,
+        m_strict   = TRUE)
+
     ## sandbox di translators
     if (length(sandbox_users) > 0L) {
         ## notify: header
@@ -165,14 +194,26 @@ check_homework <- function(users, role = c("translator", "revisor1", "revisor2")
 
 
 ## main class method
-assign <- function(translate_f = '', revise2_f = '')
+assign <- function(translate_f = NULL, revise2_f = NULL)
 {
     ## aggiorna dati in memoria e salva su disco alla fine
     ## private$avanz$from_disk()
     on.exit(private$avanz$to_disk())
 
-    translate_users <- lines_from_file(translate_f)
-    revise2_users   <- lines_from_file(revise2_f)
+    translate_users <- from_file_or_menu(
+        translate_f,
+        m_title    = 'Specificare utenti (TRN) per assegnazione traduzione',
+        m_choices  = self$users$translators(),
+        m_multiple = TRUE,
+        m_strict   = TRUE)
+    
+    revise2_users   <- from_file_or_menu(
+        revise2_f,
+        m_title    = 'Specificare utenti (REV2) per assegnazione traduzione',
+        m_choices  = self$users$revisors2(),
+        m_multiple = TRUE,
+        m_strict   = TRUE)
+
 
     ## -----
     ## Utils
@@ -262,24 +303,40 @@ basename2 <- function(x) {
     else basename(x)
 }
 
-mark_progresses <- function(trn_completed_f  = '',
-                            rev1_started_f   = '',
-                            rev1_completed_f = '',
-                            rev2_completed_f = '')
+mark_progresses <- function(trn_completed_f  = NULL,
+                            rev1_started_f   = NULL,
+                            rev1_completed_f = NULL,
+                            rev2_completed_f = NULL)
 {
     ## updates dei dati interni e salvataggio a fine lavoro
     ## private$avanz$from_disk()
     on.exit(private$avanz$to_disk())
+   
+    ## TRANSLATE COMPLETATE
+    compl_trn  <- basename2(from_file_or_menu(
+        trn_completed_f,
+        m_title    = 'Specificare files (TRN) per i quali è stata COMPLETATA la TRADUZIONE',
+        m_choices  = private$avanz$to_be_completed_files('translator'),
+        m_multiple = TRUE,
+        m_strict   = TRUE
+    ))
+    if (length(compl_trn) > 0L){
+        Map(private$avanz$mark_as_completed,
+            as.list(compl_trn), as.list('trn'))
+    }
 
-    ## rev1 iniziate
-    started_rev1 <- basename2(lines_from_file(rev1_started_f))
+    ## REV1 INIZIATE
+    started_rev1 <- basename2(from_file_or_menu(
+        rev1_started_f,
+        m_title    = 'Specificare files (REV1) per i quali è INIZIATA la PRIMA REVISIONE',
+        m_choices  = private$avanz$assignable_files('revisor1'),
+        m_multiple = TRUE,
+        m_strict   = TRUE
+    ))
     if (length(started_rev1) > 0L) {
         get_rev1_user <- function(f) {
-            title <- sprintf('Who assigned %s', f)
-            users <- self$users$revisors1()
-            res <- lbmisc::menu2(title = title, choices = users)
-            ## users[id]
-            res
+            lbmisc::menu2(title = sprintf('Who assigned %s', f),
+                          choices = self$users$revisors1())
         }
         rev1_assignee <- unlist(lapply(started_rev1, get_rev1_user))
         Map(private$avanz$mark_as_started,
@@ -288,20 +345,27 @@ mark_progresses <- function(trn_completed_f  = '',
             as.list('revisor1'))
     }
     
-    ## trn, rev1 e rev2 completate
-    compl_trn  <- basename2(lines_from_file(trn_completed_f))
-    if (length(compl_trn) > 0L){
-        Map(private$avanz$mark_as_completed,
-            as.list(compl_trn), as.list('trn'))
-    }
-    ## 
-    compl_rev1 <- basename2(lines_from_file(rev1_completed_f))
+    ## REV1 COMPLETATE
+    compl_rev1 <- basename2(from_file_or_menu(
+        rev1_completed_f,
+        m_title    = 'Specificare files (TRN) per i quali è stata COMPLETATA la PRIMA REVISIONE',
+        m_choices  = private$avanz$to_be_completed_files('revisor1'),
+        m_multiple = TRUE,
+        m_strict   = TRUE
+    ))
     if (length(compl_rev1) > 0L){
     Map(private$avanz$mark_as_completed,
         as.list(compl_rev1), as.list('rev1'))
     }
-    ## 
-    compl_rev2 <- basename2(lines_from_file(rev2_completed_f))
+    
+    ## REV2 COMPLETATE
+    compl_rev2 <- basename2(from_file_or_menu(
+        rev2_completed_f,
+        m_title    = 'Specificare files (REV) per i quali è stata COMPLETATA la SECONDA REVISIONE',
+        m_choices  = private$avanz$to_be_completed_files('revisor2'),
+        m_multiple = TRUE,
+        m_strict   = TRUE
+    ))
     if (length(compl_rev2) > 0L){
     Map(private$avanz$mark_as_completed,
         as.list(compl_rev2), as.list('rev2'))
@@ -383,6 +447,40 @@ git_log_analysis <- function(){
     system(cmd)
 }
 
+## one interactive method to rule them all
+menu <- function(){
+
+    choices <- matrix(c(
+        "1", "Create sandboxes",
+        "2", "Assign TRN or REV2",
+        "3", "Mark progresses",
+        "4", "Monitoring",
+        "5", "Make final srt",
+        "6", "Final SRT stats",
+        "7", "List assignee"
+        ),
+        ncol = 2,
+        byrow = TRUE
+    )
+
+    repeat {
+        ascii_header('        MAIN MENU        ')
+        rval <- lbmisc::menu2(choices  = choices[, 2],
+                              title    = "Select a number or 0 to exit",
+                              multiple = FALSE,
+                              return   = "index",
+                              strict   = TRUE)
+        switch(as.character(rval),
+               "1" = self$create_sandbox(),
+               "2" = self$assign(),
+               "3" = self$mark_progresses(),
+               "4" = self$monitoring(),
+               "5" = self$make_final_srt(),
+               "6" = self$final_srt_stats(),
+               "7" = self$list_assignee())
+        if (is.na(rval)) break
+    }
+}
 
 ## ----------------------------------------------------------------
 ## Main class
@@ -404,7 +502,8 @@ prj <- R6::R6Class(classname = "prj",
                        final_srt_stats = final_srt_stats,
                        list_assignee =  list_assignee,
                        monitoring = monitoring,
-                       git_log_analysis = git_log_analysis
+                       git_log_analysis = git_log_analysis,
+                       menu = menu
                    ),
                    private = list(
                        id = NULL,

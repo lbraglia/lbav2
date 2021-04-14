@@ -2,6 +2,7 @@
 #' @importFrom lbmisc %without%
 #' @importFrom lbmisc %nin%
 #' @importFrom lbmisc col2hex
+#' @importFrom lbmisc menu2
 #' @importFrom lbmisc to_00_char
 #' @importFrom lbmisc ascii_header
 #' @importFrom lbmisc rm_spaces

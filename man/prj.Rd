@@ -21,6 +21,7 @@ classe che rappresenta un progetto
 \item \href{#method-list_assignee}{\code{prj$list_assignee()}}
 \item \href{#method-monitoring}{\code{prj$monitoring()}}
 \item \href{#method-git_log_analysis}{\code{prj$git_log_analysis()}}
+\item \href{#method-menu}{\code{prj$menu()}}
 \item \href{#method-clone}{\code{prj$clone()}}
 }
 }
@@ -47,7 +48,7 @@ classe che rappresenta un progetto
 \if{latex}{\out{\hypertarget{method-create_sandbox}{}}}
 \subsection{Method \code{create_sandbox()}}{
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{prj$create_sandbox(sandbox_f = "", rev1_sandbox_f = "")}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{prj$create_sandbox(sandbox_f = NULL, rev1_sandbox_f = NULL)}\if{html}{\out{</div>}}
 }
 
 }
@@ -56,7 +57,7 @@ classe che rappresenta un progetto
 \if{latex}{\out{\hypertarget{method-assign}{}}}
 \subsection{Method \code{assign()}}{
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{prj$assign(translate_f = "", revise2_f = "")}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{prj$assign(translate_f = NULL, revise2_f = NULL)}\if{html}{\out{</div>}}
 }
 
 }
@@ -66,10 +67,10 @@ classe che rappresenta un progetto
 \subsection{Method \code{mark_progresses()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{prj$mark_progresses(
-  trn_completed_f = "",
-  rev1_started_f = "",
-  rev1_completed_f = "",
-  rev2_completed_f = ""
+  trn_completed_f = NULL,
+  rev1_started_f = NULL,
+  rev1_completed_f = NULL,
+  rev2_completed_f = NULL
 )}\if{html}{\out{</div>}}
 }
 
@@ -116,6 +117,15 @@ classe che rappresenta un progetto
 \subsection{Method \code{git_log_analysis()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{prj$git_log_analysis()}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-menu"></a>}}
+\if{latex}{\out{\hypertarget{method-menu}{}}}
+\subsection{Method \code{menu()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{prj$menu()}\if{html}{\out{</div>}}
 }
 
 }
