@@ -358,7 +358,7 @@ mark_progresses <- function(trn_completed_f  = NULL,
         }
     if (length(started_rev1) > 0L) {
         get_rev1_user <- function(f) {
-            lbmisc::menu2(title = sprintf('Who assigned %s', f),
+            lbmisc::menu2(title = sprintf('Chi è il revisore di: %s', f),
                           choices = self$users$revisors1())
         }
         rev1_assignee <- unlist(lapply(started_rev1, get_rev1_user))
@@ -408,20 +408,21 @@ mark_progresses <- function(trn_completed_f  = NULL,
     ## notifica
     revs_todo <- private$avanz$revs2_todo()
     if (length(revs_todo) > 0){
-        create_rev <- function(f){
+        create_rev <- function(rf){
             ## obtain trn to cat
-            trns <- private$avanz$get_trn_fn_for_rev2(f)
+            trns <- private$avanz$get_trn_fn_for_rev2(rf)
             ## create the file
-            cmd <- sprintf("cat %s", paste(private$prj_path(trns), collapse = ' '))
+            cmd <- sprintf("cat %s", paste(private$prj_path(trns),
+                                           collapse = ' '))
             input <- pipe(cmd)
             on.exit(close(input))
             ## file per check con subs editor: parsa proprio l'srt e pulisci
-            rev <- srt$new(id = f, f = input)
-            rev$write(f = private$prj_path(f))
+            rev <- srt$new(id = rf, f = input)
+            rev$write(f = private$prj_path(rf))
             ## update monitoring
-            private$avanz$revs2_created(f)
+            private$avanz$revs2_created(rf)
         }
-        lapply(create_rev, as.list(revs_todo))
+        lapply(as.list(revs_todo), create_rev)
         ## Notifica
         ascii_header('Ready for revision check: file da assegnare')        
         cat("\n\n", private$prj_path(revs_todo), "\n\n", sep = '\n')

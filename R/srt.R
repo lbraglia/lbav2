@@ -2,53 +2,52 @@ hour_secs <- 60 * 60
 min_secs  <- 60    
 srt_time_ptrn <- "^(\\d\\d):(\\d\\d):(\\d\\d),(\\d\\d\\d).+(\\d\\d):(\\d\\d):(\\d\\d),(\\d\\d\\d)$"
 
-srt_validator <- function(s){
-    valid_id(s$id)
-    valid_times(s)
-    valid_text(s$text)
-}
-
-
-valid_id <- function(x) {
+valid_id <- function(x, srt_id, sub_id) {
     ok <- !is.na(as.integer(x))
-    if (!ok) stop("not valid id for: ", x)
+    if (!ok) warning("srt:", srt_id, " sub_id:", sub_id,
+                  " -> not valid id")
 }
 
-valid_text <- function(x) {
+valid_text <- function(x, srt_id, sub_id) {
     ok <- is.character(x) && length(x) > 0L
-    if (!ok) stop("there are subs with no text: ", x)
+    if (!ok) warning("srt:", srt_id, " sub_id:", sub_id,
+                  " -> sub with no text")
 }
 
-valid_times <- function(x){
+valid_times <- function(x, srt_id, sub_id){
     ## questi sono già interi, testare solo che siano nel range giusto
-    valid_hour(x$start_hour)
-    valid_min(x$start_min)
-    valid_sec(x$start_sec)
-    valid_msec(x$start_msec)
-    valid_hour(x$stop_hour)
-    valid_min(x$stop_min)
-    valid_sec(x$stop_sec)
-    valid_msec(x$stop_msec)
+    valid_hour(x$start_hour, srt_id = srt_id, sub_id = sub_id)
+    valid_min(x$start_min,   srt_id = srt_id, sub_id = sub_id)
+    valid_sec(x$start_sec,   srt_id = srt_id, sub_id = sub_id)
+    valid_msec(x$start_msec, srt_id = srt_id, sub_id = sub_id)
+    valid_hour(x$stop_hour,  srt_id = srt_id, sub_id = sub_id)
+    valid_min(x$stop_min,    srt_id = srt_id, sub_id = sub_id)
+    valid_sec(x$stop_sec,    srt_id = srt_id, sub_id = sub_id)
+    valid_msec(x$stop_msec,  srt_id = srt_id, sub_id = sub_id)
 }
 
-valid_hour <- function(x) {
+valid_hour <- function(x, srt_id, sub_id) {
     ok <- in_range(x, c(0,24)) #qualche dubbio sull'estremo superiore per srt
-    if (!ok) stop("not valid hour for: ", x)
+    if (!ok) warning("srt:", srt_id, " sub_id:", sub_id,
+                  " -> not valid hour for ", x)
 }
 
-valid_min <- function(x) {
+valid_min <- function(x, srt_id, sub_id) {
     ok <- in_range(x, c(0,59))
-    if (!ok) stop("not valid min for: ", x)
+    if (!ok) warning("srt:", srt_id, " sub_id:", sub_id,
+                  " -> not valid min for: ", x)
 }
 
-valid_sec <- function(x) {
+valid_sec <- function(x, srt_id, sub_id) {
     ok <- in_range(x, c(0,59))
-    if (!ok) stop("not valid sec for: ", x)
+    if (!ok) warning("srt:", srt_id, " sub_id:", sub_id,
+                  " -> not valid sec for: ", x)
 }
 
-valid_msec <- function(x) {
+valid_msec <- function(x, srt_id, sub_id) {
     ok <- in_range(x, c(0,999))
-    if (!ok) stop("not valid sec for: ", x)
+    if (!ok) warning("srt:", srt_id, " sub_id:", sub_id,
+                  " -> not valid sec for: ", x)
 }
 
 in_range <- function(t, r) {
@@ -152,6 +151,13 @@ read_srt <- function(f = NULL, comment = '##', set_id_as_prog = TRUE, validate =
         print(check)
     }
     ## check/validazione del contenuto del srt parsato
+    
+    srt_validator <- function(s){
+        sub_id <- s$id
+        valid_id(s$id,     srt_id = private$id, sub_id = sub_id)
+        valid_times(s,     srt_id = private$id, sub_id = sub_id)
+        valid_text(s$text, srt_id = private$id, sub_id = sub_id)
+    }
     if (validate) lapply(parsed_srt, srt_validator)
     ## per fixare i collage (o fare quello che normalmente fanno i subeditor)
     if (set_id_as_prog) {
