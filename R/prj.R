@@ -46,13 +46,17 @@ from_file_or_menu <- function(f = NULL,
 {
     ## dai la priorità al file se specificato, altrimento prendi da menu
     if (is.null(f)){
-        if (is.null(m_choices)) stop("No file nor menu choices. stopping")
-        rval <- lbmisc::menu2(choices   = m_choices,
-                              title    = m_title,
-                              multiple = m_multiple,
-                              return   = "values",
-                              strict   = m_strict)
-        if (is.na(rval)) rval <- character(0)
+        if (length(m_choices) > 0) {
+            rval <- lbmisc::menu2(choices   = m_choices,
+                                  title    = m_title,
+                                  multiple = m_multiple,
+                                  return   = "values",
+                                  strict   = m_strict)
+            if (length(rval) == 1 && is.na(rval))
+                rval <- NULL
+        } else {
+            rval <- NULL
+        }
     } else {
         rval <- if (file.exists(f)) readLines(f) else NULL
         rval <- rval  %without% ''
@@ -200,20 +204,29 @@ assign <- function(translate_f = NULL, revise2_f = NULL)
     ## private$avanz$from_disk()
     on.exit(private$avanz$to_disk())
 
-    translate_users <- from_file_or_menu(
-        translate_f,
-        m_title    = 'Specificare utenti (TRN) per assegnazione traduzione',
-        m_choices  = self$users$translators(),
-        m_multiple = TRUE,
-        m_strict   = TRUE)
+    assignable_translate <-
+        length(private$avanz$assignable_files('translator')) > 0
+    assignable_revise2 <-
+        length(private$avanz$assignable_files('revisor2')) > 0
     
-    revise2_users   <- from_file_or_menu(
-        revise2_f,
-        m_title    = 'Specificare utenti (REV2) per assegnazione traduzione',
-        m_choices  = self$users$revisors2(),
-        m_multiple = TRUE,
-        m_strict   = TRUE)
-
+    ## se ci sono file da assegnare richiedi i traduttori
+    translate_users <- if (assignable_translate){
+                           from_file_or_menu(
+                               translate_f,
+                               m_title    = 'Specificare utenti (TRN) per assegnazione traduzione',
+                               m_choices  = self$users$translators(),
+                               m_multiple = TRUE,
+                               m_strict   = TRUE)
+                       } else NULL
+    
+    revise2_users <- if (assignable_revise2){
+                         from_file_or_menu(
+                             revise2_f,
+                             m_title    = 'Specificare utenti (REV2) per assegnazione revisione',
+                             m_choices  = self$users$revisors2(),
+                             m_multiple = TRUE,
+                             m_strict   = TRUE)
+                     } else NULL
 
     ## -----
     ## Utils
@@ -311,28 +324,38 @@ mark_progresses <- function(trn_completed_f  = NULL,
     ## updates dei dati interni e salvataggio a fine lavoro
     ## private$avanz$from_disk()
     on.exit(private$avanz$to_disk())
-   
+    
     ## TRANSLATE COMPLETATE
-    compl_trn  <- basename2(from_file_or_menu(
-        trn_completed_f,
-        m_title    = 'Specificare files (TRN) per i quali è stata COMPLETATA la TRADUZIONE',
-        m_choices  = private$avanz$to_be_completed_files('translator'),
-        m_multiple = TRUE,
-        m_strict   = TRUE
-    ))
+    translate_in_progress <- length(private$avanz$to_be_completed_files('translator')) > 0   
+    compl_trn  <-
+        if (translate_in_progress){
+            basename2(from_file_or_menu(
+                trn_completed_f,
+                m_title    = 'Specificare files (TRN) per i quali è stata COMPLETATA la TRADUZIONE',
+                m_choices  = private$avanz$to_be_completed_files('translator'),
+                m_multiple = TRUE,
+                m_strict   = TRUE))
+        } else {
+            NULL
+        }
     if (length(compl_trn) > 0L){
         Map(private$avanz$mark_as_completed,
             as.list(compl_trn), as.list('trn'))
     }
 
     ## REV1 INIZIATE
-    started_rev1 <- basename2(from_file_or_menu(
-        rev1_started_f,
-        m_title    = 'Specificare files (REV1) per i quali è INIZIATA la PRIMA REVISIONE',
-        m_choices  = private$avanz$assignable_files('revisor1'),
-        m_multiple = TRUE,
-        m_strict   = TRUE
-    ))
+    translate_compl_non_rev1 <- length(private$avanz$assignable_files('revisor1')) > 0
+    started_rev1 <-
+        if (translate_compl_non_rev1) {
+            basename2(from_file_or_menu(
+                rev1_started_f,
+                m_title    = 'Specificare files (REV1) per i quali è INIZIATA la PRIMA REVISIONE',
+                m_choices  = private$avanz$assignable_files('revisor1'),
+                m_multiple = TRUE,
+                m_strict   = TRUE))
+        } else {
+            NULL
+        }
     if (length(started_rev1) > 0L) {
         get_rev1_user <- function(f) {
             lbmisc::menu2(title = sprintf('Who assigned %s', f),
@@ -344,31 +367,41 @@ mark_progresses <- function(trn_completed_f  = NULL,
             as.list(rev1_assignee),
             as.list('revisor1'))
     }
-    
+
     ## REV1 COMPLETATE
-    compl_rev1 <- basename2(from_file_or_menu(
-        rev1_completed_f,
-        m_title    = 'Specificare files (TRN) per i quali è stata COMPLETATA la PRIMA REVISIONE',
-        m_choices  = private$avanz$to_be_completed_files('revisor1'),
-        m_multiple = TRUE,
-        m_strict   = TRUE
-    ))
+    rev1_iniziate_non_compl <- length(private$avanz$to_be_completed_files('revisor1')) > 0
+    compl_rev1 <-
+        if (rev1_iniziate_non_compl) {
+            basename2(from_file_or_menu(
+                rev1_completed_f,
+                m_title    = 'Specificare files (TRN) per i quali è stata COMPLETATA la PRIMA REVISIONE',
+                m_choices  = private$avanz$to_be_completed_files('revisor1'),
+                m_multiple = TRUE,
+                m_strict   = TRUE))
+        } else {
+            NULL
+        }
     if (length(compl_rev1) > 0L){
-    Map(private$avanz$mark_as_completed,
-        as.list(compl_rev1), as.list('rev1'))
+        Map(private$avanz$mark_as_completed,
+            as.list(compl_rev1), as.list('rev1'))
     }
     
     ## REV2 COMPLETATE
-    compl_rev2 <- basename2(from_file_or_menu(
-        rev2_completed_f,
-        m_title    = 'Specificare files (REV) per i quali è stata COMPLETATA la SECONDA REVISIONE',
-        m_choices  = private$avanz$to_be_completed_files('revisor2'),
-        m_multiple = TRUE,
-        m_strict   = TRUE
-    ))
+    rev2_iniziate_non_compl <- length(private$avanz$to_be_completed_files('revisor2')) > 0
+    compl_rev2 <-
+        if (rev2_iniziate_non_compl){
+            basename2(from_file_or_menu(
+                rev2_completed_f,
+                m_title    = 'Specificare files (REV) per i quali è stata COMPLETATA la SECONDA REVISIONE',
+                m_choices  = private$avanz$to_be_completed_files('revisor2'),
+                m_multiple = TRUE,
+                m_strict   = TRUE))
+        } else {
+            NULL
+        }
     if (length(compl_rev2) > 0L){
-    Map(private$avanz$mark_as_completed,
-        as.list(compl_rev2), as.list('rev2'))
+        Map(private$avanz$mark_as_completed,
+            as.list(compl_rev2), as.list('rev2'))
     }
     
     ## controlla se ci sono file revisione da creare, nel caso fallo e
@@ -383,8 +416,7 @@ mark_progresses <- function(trn_completed_f  = NULL,
             input <- pipe(cmd)
             on.exit(close(input))
             ## file per check con subs editor: parsa proprio l'srt e pulisci
-            rev <- srt$new(id = f, f = input#, validate = FALSE
-                           )
+            rev <- srt$new(id = f, f = input)
             rev$write(f = private$prj_path(f))
             ## update monitoring
             private$avanz$revs2_created(f)
