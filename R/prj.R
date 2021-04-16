@@ -287,7 +287,7 @@ assign <- function(translate_f = NULL, revise2_f = NULL)
                 listing(to_path)
             } else if (role == 'revisor2'){
                 gh_path <- "https://raw.githubusercontent.com/lbraglia/av_it_subs/main"
-                rev2_urls <- sprintf("%s/%s", gh_path, private$prj_path(to_path))
+                rev2_urls <- sprintf("%s/%s", gh_path, to_path)
                 listing(rev2_urls)
             }
         } else {
