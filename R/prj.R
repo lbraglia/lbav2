@@ -341,6 +341,11 @@ mark_progresses <- function(trn_completed_f  = NULL,
     if (length(compl_trn) > 0L){
         Map(private$avanz$mark_as_completed,
             as.list(compl_trn), as.list('trn'))
+        cat("\n\n")
+        cat("Rispondere ai file completati menzionando i revisori")
+        cat("\n\n")
+        self$users$mention('revisor1')
+        cat(": revisione linguistica disponibile.\n\n")
     }
 
     ## REV1 INIZIATE
@@ -349,7 +354,7 @@ mark_progresses <- function(trn_completed_f  = NULL,
         if (translate_compl_non_rev1) {
             basename2(from_file_or_menu(
                 rev1_started_f,
-                m_title    = 'Specificare files (REV1) per i quali è INIZIATA la PRIMA REVISIONE',
+                m_title    = 'Specificare files (REV1) per i quali è INIZIATA la PRIMA REVISIONE (LINGUISTICA)',
                 m_choices  = private$avanz$assignable_files('revisor1'),
                 m_multiple = TRUE,
                 m_strict   = TRUE))
@@ -374,7 +379,7 @@ mark_progresses <- function(trn_completed_f  = NULL,
         if (rev1_iniziate_non_compl) {
             basename2(from_file_or_menu(
                 rev1_completed_f,
-                m_title    = 'Specificare files (TRN) per i quali è stata COMPLETATA la PRIMA REVISIONE',
+                m_title    = 'Specificare files (TRN) per i quali è stata COMPLETATA la PRIMA REVISIONE (LINGUISTICA)',
                 m_choices  = private$avanz$to_be_completed_files('revisor1'),
                 m_multiple = TRUE,
                 m_strict   = TRUE))
@@ -392,7 +397,7 @@ mark_progresses <- function(trn_completed_f  = NULL,
         if (rev2_iniziate_non_compl){
             basename2(from_file_or_menu(
                 rev2_completed_f,
-                m_title    = 'Specificare files (REV) per i quali è stata COMPLETATA la SECONDA REVISIONE',
+                m_title    = 'Specificare files (REV) per i quali è stata COMPLETATA la SECONDA REVISIONE (LEGGIBILITA)',
                 m_choices  = private$avanz$to_be_completed_files('revisor2'),
                 m_multiple = TRUE,
                 m_strict   = TRUE))
@@ -425,8 +430,11 @@ mark_progresses <- function(trn_completed_f  = NULL,
         lapply(as.list(revs_todo), create_rev)
         ## Notifica
         ascii_header('Ready for revision check: file da assegnare')        
-        cat("\n\n", private$prj_path(revs_todo), "\n\n", sep = '\n')
+        cat("\n")
+        cat(private$prj_path(revs_todo), sep = '\n')
+        cat("\n\n")
         self$users$mention('revisor2')
+        cat("\n")
     }
 }
 

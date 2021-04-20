@@ -27,7 +27,7 @@ users <- R6::R6Class('users',
                                            'translator' = self$translators(),
                                            'revisor1' = self$revisors1(),
                                            'revisor2' = self$revisors2())
-                             cat("\n\n", sprintf("@%s", who), "\n", sep = ' ')
+                             cat(sprintf("@%s", who), sep = ' ')
                          }
                      ),
                      private = list(
