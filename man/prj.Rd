@@ -20,6 +20,8 @@ classe che rappresenta un progetto
 \item \href{#method-final_srt_stats}{\code{prj$final_srt_stats()}}
 \item \href{#method-list_assignee}{\code{prj$list_assignee()}}
 \item \href{#method-monitoring}{\code{prj$monitoring()}}
+\item \href{#method-available_rev1}{\code{prj$available_rev1()}}
+\item \href{#method-available_rev2}{\code{prj$available_rev2()}}
 \item \href{#method-git_log_analysis}{\code{prj$git_log_analysis()}}
 \item \href{#method-menu}{\code{prj$menu()}}
 \item \href{#method-clone}{\code{prj$clone()}}
@@ -108,6 +110,24 @@ classe che rappresenta un progetto
 \subsection{Method \code{monitoring()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{prj$monitoring()}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-available_rev1"></a>}}
+\if{latex}{\out{\hypertarget{method-available_rev1}{}}}
+\subsection{Method \code{available_rev1()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{prj$available_rev1()}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-available_rev2"></a>}}
+\if{latex}{\out{\hypertarget{method-available_rev2}{}}}
+\subsection{Method \code{available_rev2()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{prj$available_rev2()}\if{html}{\out{</div>}}
 }
 
 }

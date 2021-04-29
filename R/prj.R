@@ -338,6 +338,10 @@ mark_progresses <- function(trn_completed_f  = NULL,
         } else {
             NULL
         }
+
+    ## check here
+    browser()
+    ## 
     if (length(compl_trn) > 0L){
         Map(private$avanz$mark_as_completed,
             as.list(compl_trn), as.list('trn'))
@@ -470,6 +474,21 @@ monitoring <- function(){
     private$avanz$monitoring()
 }
 
+available_rev1  <- function(){
+    self$users$mention("revisor1")
+    cat(": files attualmente disponibili per la revisione linguistica:\n\n")
+    cat(private$avanz$assignable_files('revisor1'), sep = '\n')
+    cat("\n")
+}
+
+available_rev2  <- function(){
+    self$users$mention("revisor2")
+    cat(": files attualmente disponibili per la revisione di leggibilità:\n\n")
+    cat(private$avanz$assignable_files('revisor2'), sep = '\n')
+    cat("\n")
+}
+
+
 git_log_analysis <- function(){
     projs <- list.files('subs', full.names = TRUE)
     exclude_dirs <- projs %without% private$prj_dir
@@ -497,9 +516,11 @@ menu <- function(){
         "3", "Assign TRN or REV2",
         "4", "Mark progresses",
         "5", "Monitoring",
-        "6", "Make final srt",
-        "7", "Final SRT stats",
-        "0", "List assignee"
+        "6", "List available REV1",
+        "7", "List available REV2",
+        "8", "Make final srt",
+        "9", "Final SRT stats",
+        "10", "List assignee"
         ),
         ncol = 2,
         byrow = TRUE
@@ -518,9 +539,11 @@ menu <- function(){
                "3" = self$assign(),
                "4" = self$mark_progresses(),
                "5" = self$monitoring(),
-               "6" = self$make_final_srt(),
-               "7" = self$final_srt_stats(),
-               "8" = self$list_assignee())
+               "6" = self$available_rev1(),
+               "7" = self$available_rev2(),
+               "8" = self$make_final_srt(),
+               "9" = self$final_srt_stats(),
+               "10" = self$list_assignee())
         if (is.na(rval)) break
     }
 }
@@ -544,6 +567,8 @@ prj <- R6::R6Class(classname = "prj",
                        make_final_srt = make_final_srt,
                        final_srt_stats = final_srt_stats,
                        list_assignee =  list_assignee,
+                       available_rev1 = available_rev1,
+                       available_rev2 = available_rev2,
                        monitoring = monitoring,
                        git_log_analysis = git_log_analysis,
                        menu = menu
