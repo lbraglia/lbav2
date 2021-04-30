@@ -340,16 +340,13 @@ mark_progresses <- function(trn_completed_f  = NULL,
         }
 
     ## check here
-    browser()
+    ## browser()
     ## 
     if (length(compl_trn) > 0L){
         Map(private$avanz$mark_as_completed,
             as.list(compl_trn), as.list('trn'))
         cat("\n\n")
-        cat("Rispondere ai file completati menzionando i revisori")
-        cat("\n\n")
-        self$users$mention('revisor1')
-        cat(": revisione linguistica disponibile.\n\n")
+        self$available_rev1()
     }
 
     ## REV1 INIZIATE
@@ -433,12 +430,13 @@ mark_progresses <- function(trn_completed_f  = NULL,
         }
         lapply(as.list(revs_todo), create_rev)
         ## Notifica
-        ascii_header('Ready for revision check: file da assegnare')        
-        cat("\n")
-        cat(private$prj_path(revs_todo), sep = '\n')
-        cat("\n\n")
-        self$users$mention('revisor2')
-        cat("\n")
+        self$available_rev2()
+        ## ascii_header('Ready for revision check: file da assegnare')        
+        ## cat("\n")
+        ## cat(private$prj_path(revs_todo), sep = '\n')
+        ## cat("\n\n")
+        ## self$users$mention('revisor2')
+        ## cat("\n")
     }
 }
 
