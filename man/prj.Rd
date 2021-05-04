@@ -19,6 +19,7 @@ classe che rappresenta un progetto
 \item \href{#method-make_final_srt}{\code{prj$make_final_srt()}}
 \item \href{#method-final_srt_stats}{\code{prj$final_srt_stats()}}
 \item \href{#method-list_assignee}{\code{prj$list_assignee()}}
+\item \href{#method-list_users}{\code{prj$list_users()}}
 \item \href{#method-monitoring}{\code{prj$monitoring()}}
 \item \href{#method-available_rev1}{\code{prj$available_rev1()}}
 \item \href{#method-available_rev2}{\code{prj$available_rev2()}}
@@ -101,6 +102,15 @@ classe che rappresenta un progetto
 \subsection{Method \code{list_assignee()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{prj$list_assignee()}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-list_users"></a>}}
+\if{latex}{\out{\hypertarget{method-list_users}{}}}
+\subsection{Method \code{list_users()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{prj$list_users()}\if{html}{\out{</div>}}
 }
 
 }

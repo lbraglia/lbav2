@@ -1,5 +1,5 @@
 initialize <- function(users_f) {
-    private$data <- utils::read.csv(users_f)
+    private$data <- utils::read.csv(users_f, comment = '#')
 }
 
 #' @export
@@ -18,8 +18,10 @@ users <- R6::R6Class('users',
                              tmp <- private$data
                              sort(tmp[tmp$revisor2, 'gh_user'])
                          },
-                         print = function(){
+                         list_users = function(){
+                             ## cat("```\n")                            
                              print(private$data, row.names = FALSE)
+                             ## cat("```\n")
                          },
                          mention = function(role = c('translator', 'revisor1', 'revisor2')){
                              role <- match.arg(role)

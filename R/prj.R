@@ -468,6 +468,10 @@ list_assignee <- function(){
     private$avanz$list_assignee()
 }
 
+list_users <- function(){
+    self$users$list_users()
+}
+
 monitoring <- function(){
     private$avanz$monitoring()
 }
@@ -518,7 +522,8 @@ menu <- function(){
         "7", "List available REV2",
         "8", "Make final srt",
         "9", "Final SRT stats",
-        "10", "List assignee"
+        "10", "List assignee",
+        "11", "List users"
         ),
         ncol = 2,
         byrow = TRUE
@@ -541,7 +546,8 @@ menu <- function(){
                "7" = self$available_rev2(),
                "8" = self$make_final_srt(),
                "9" = self$final_srt_stats(),
-               "10" = self$list_assignee())
+               "10" = self$list_assignee(),
+               "11" = self$list_users())
         if (is.na(rval)) break
     }
 }
@@ -565,6 +571,7 @@ prj <- R6::R6Class(classname = "prj",
                        make_final_srt = make_final_srt,
                        final_srt_stats = final_srt_stats,
                        list_assignee =  list_assignee,
+                       list_users =  list_users,
                        available_rev1 = available_rev1,
                        available_rev2 = available_rev2,
                        monitoring = monitoring,
