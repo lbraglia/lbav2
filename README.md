@@ -19,9 +19,9 @@ themselves is [here](https://github.com/lbraglia/av_it_subs).
 ## Usage
 
 If you want to make your own subs have some programming skill and want
-to reuse our software, after installing this package in a Unix
-operating system open R in the subs directory (for me the clone of
-[this](https://github.com/lbraglia/av_it_subs) repo on my machine),
+to reuse our software, after installing this package on a Unix
+operating system open R in the subs directory (for me it's the clone
+of [this](https://github.com/lbraglia/av_it_subs) repo on my machine),
 then
 
 ```R
