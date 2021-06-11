@@ -138,7 +138,7 @@ read_srt <- function(f = NULL, comment = '##', set_id_as_prog = TRUE, validate =
     ## è andato storto (manca una linea da qualche parte)
     progs <- seq(from = min(as.integer(ids), na.rm = TRUE),
                  length = length(parsed_srt))
-    if (!all(as.integer(ids) == progs)){
+    if (!all(as.integer(ids) %in% progs)){
         msg <- c("problemi nel parsing: id del srt origine e\n",
                  "prog del parsato non coincidono, probabilmente manca\n",
                  "una linea bianca necessaria tra due sub,\n",
